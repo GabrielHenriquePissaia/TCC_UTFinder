@@ -26,12 +26,12 @@ const stacknavigator = () => {
     >
       {user ? (
         <>
+          <Stack.Screen name="Inicio" component={inicio} />
           <Stack.Screen name="Home" component={home} />
           <Stack.Screen name="Chat" component={chat} />
           <Stack.Screen name="Message" component={message} />
           <Stack.Screen name="Location" component={location} />
           <Stack.Screen name="Bloqueios" component={bloqueios} />
-          <Stack.Screen name="Inicio" component={inicio} />
           <Stack.Screen name="Pedidos" component={pedidos} />
 
           <Stack.Screen

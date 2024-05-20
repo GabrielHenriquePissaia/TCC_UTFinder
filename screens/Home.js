@@ -184,6 +184,9 @@ const Home = () => {
         <TouchableOpacity onPress={() => navigation.navigate("Bloqueios")}>
           <Ionicons name="ban-sharp" size={24} color="black"/>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
+          <Ionicons name="home" size={24} color="black"/>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
           <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
         </TouchableOpacity>
