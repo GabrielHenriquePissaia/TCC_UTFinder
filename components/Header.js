@@ -14,7 +14,7 @@ const Header = ({title,callEnable}) => {
     <View style={tw.style("p-2 flex-row items-center justify-between")}>
       <View style={tw.style("flex flex-row items-center")}>
         <TouchableOpacity style={tw.style("p-2")} onPress={()=>navigation.goBack()}>
-            <Ionicons name="chevron-back-outline" size={34} color="#FF5864" />
+            <Ionicons name="chevron-back-outline" size={34} color="black" />
         </TouchableOpacity>
         <Text style={tw.style("text-2xl font-bold pl-2")}>{title}</Text>
       </View>

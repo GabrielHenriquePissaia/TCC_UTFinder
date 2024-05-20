@@ -24,7 +24,7 @@ const Home = () => {
   const [currentRequest, setCurrentRequest] = useState(null);
 
   const haversineDistance = (coords1, coords2) => {
-    const R = 6371; // Radio da terra
+    const R = 6371; // Raio da terra
     const lat1 = coords1.latitude * Math.PI / 180;
     const lat2 = coords2.latitude * Math.PI / 180;
     const deltaLat = (coords2.latitude - coords1.latitude) * Math.PI / 180;
@@ -169,8 +169,8 @@ const Home = () => {
   return (
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={logout}>
-          <Ionicons name="chevron-back-outline" size={34} color="#FF5864" />
+        <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
+          <Ionicons name="chevron-back-outline" size={34} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Modal")}>
           <Image style={tw.style("h-10 w-10 rounded-full")} source={{ uri: "https://img.freepik.com/free-icon/user_318-159711.jpg" }} />
@@ -183,9 +183,6 @@ const Home = () => {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Bloqueios")}>
           <Ionicons name="ban-sharp" size={24} color="black"/>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
-          <Ionicons name="home" size={24} color="black"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
           <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
