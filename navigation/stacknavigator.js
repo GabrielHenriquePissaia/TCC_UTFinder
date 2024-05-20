@@ -9,6 +9,9 @@ import message from "../screens/Message";
 import useAuth from "../hooks/useAuth";
 import modal from "../screens/Modal";
 import location from "../screens/Location";
+import bloqueios from "../screens/Bloqueios";
+import inicio from "../screens/Inicio";
+import pedidos from "../screens/Pedidos";
 
 const Stack = createStackNavigator();
 
@@ -27,6 +30,9 @@ const stacknavigator = () => {
           <Stack.Screen name="Chat" component={chat} />
           <Stack.Screen name="Message" component={message} />
           <Stack.Screen name="Location" component={location} />
+          <Stack.Screen name="Bloqueios" component={bloqueios} />
+          <Stack.Screen name="Inicio" component={inicio} />
+          <Stack.Screen name="Pedidos" component={pedidos} />
 
           <Stack.Screen
             name="Match"
