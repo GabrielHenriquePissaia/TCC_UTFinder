@@ -10,39 +10,41 @@ const Chatlist = () => {
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
   const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockedByUsers, setBlockedByUsers] = useState([]);
 
   useEffect(() => {
-    // Carregar usuários bloqueados
     if (user) {
       const blockedRef = collection(db, "users", user.uid, "blockedUsers");
+      const blockedByRef = collection(db, "users", user.uid, "blockedByUser");
+  
+      // Buscar usuários que bloquearam o usuário logado
+      getDocs(blockedByRef).then(snapshot => {
+        const blockedBy = snapshot.docs.map(doc => doc.id);
+        setBlockedByUsers(blockedBy);
+      });
+  
+      // Buscar usuários que o usuário logado bloqueou
       getDocs(blockedRef).then(snapshot => {
-        const blockedIds = snapshot.docs.map(doc => doc.id); // Obter IDs de usuários bloqueados
-        setBlockedUsers(blockedIds);
-      }).catch(error => {
-        console.error("Erro ao carregar usuários bloqueados:", error);
+        const blocked = snapshot.docs.map(doc => doc.id);
+        setBlockedUsers([...blockedUsers, ...blocked]); // Combinar as duas listas
       });
     }
   }, [user]);
-
+  
   useEffect(() => {
     if (user) {
       const friendsRef = collection(db, "friends", user.uid, "userFriends");
       const unsubscribe = onSnapshot(friendsRef, (snapshot) => {
-        if (snapshot.empty) {
-          console.log("No friends found.");
-        }
         const friendList = snapshot.docs.map(doc => {
           const friendData = { friendId: doc.id, ...doc.data() };
           return friendData;
-        }).filter(friend => !blockedUsers.includes(friend.friendId)); // Filtrar amigos não bloqueados
+        }).filter(friend => !blockedUsers.includes(friend.friendId) && !blockedByUsers.includes(friend.friendId)); // Excluir amigos bloqueados e quem o bloqueou
         setFriends(friendList);
-      }, error => {
-        console.error("Error fetching friends:", error);
       });
-
+  
       return () => unsubscribe();
     }
-  }, [user, blockedUsers]); // Dependência de blockedUsers adicionada
+  }, [user, blockedUsers, blockedByUsers]); // Dependência de blockedUsers adicionada
 
   console.log("Friends list:", friends);
 

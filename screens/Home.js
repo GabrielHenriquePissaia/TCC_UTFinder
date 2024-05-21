@@ -19,6 +19,7 @@ const Home = () => {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [blockedUsers, setBlockedUsers] = useState([]);
   const [distanceFilter, setDistanceFilter] = useState(200);
   const navigation = useNavigation();
 

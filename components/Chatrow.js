@@ -30,9 +30,21 @@ const ChatRow = ({ friendDetails }) => {
       photoURL: photoURL,
     };
   
+    const blockedByData = {
+      blockedAt: serverTimestamp(),
+      displayName: user.displayName, // Assume que user.displayName está disponível
+      photoURL: user.photoURL, // Assume que user.photoURL está disponível
+    };
+  
     try {
+      // Bloquear para o usuário que está realizando o bloqueio
       const userRef = doc(db, "users", blockerId, "blockedUsers", friendId);
       await setDoc(userRef, blockData);
+  
+      // Registrar o bloqueio no usuário que está sendo bloqueado
+      const targetRef = doc(db, "users", friendId, "blockedByUser", blockerId);
+      await setDoc(targetRef, blockedByData);
+  
       Alert.alert("Bloquear", "Usuário bloqueado com sucesso!");
     } catch (error) {
       console.error("Erro ao bloquear usuário:", error);
