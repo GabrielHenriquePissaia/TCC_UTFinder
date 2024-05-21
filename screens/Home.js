@@ -137,9 +137,6 @@ const Home = () => {
         <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
           <Ionicons name="chevron-back-outline" size={34} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Modal")}>
-          <Image style={tw.style("h-10 w-10 rounded-full")} source={{ uri: "https://img.freepik.com/free-icon/user_318-159711.jpg" }} />
-        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
           <Ionicons name="location" size={30} color={"#000000"}/>
         </TouchableOpacity>
