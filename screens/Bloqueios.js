@@ -29,8 +29,14 @@ const Bloqueios = () => {
 
   const handleUnblockUser = async (userId) => {
     try {
+      // Remover o usuário da lista de bloqueados do usuário atual
       await deleteDoc(doc(db, "users", user.uid, "blockedUsers", userId));
+      // Remover o usuário atual da lista de 'bloqueado por' do usuário desbloqueado
+      await deleteDoc(doc(db, "users", userId, "blockedByUser", user.uid));
+  
+      // Atualizar a lista de bloqueados localmente para refletir a mudança
       setBlockedUsers(prev => prev.filter(u => u.userId !== userId));
+  
       Alert.alert("Desbloquear", "Usuário desbloqueado com sucesso!");
     } catch (error) {
       console.error("Erro ao desbloquear usuário:", error);
