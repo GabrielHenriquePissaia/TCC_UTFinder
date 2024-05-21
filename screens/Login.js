@@ -21,28 +21,31 @@ const Login = () => {
     }, [type]);
     
 
-    const singIn = () =>{
-        if(email.trim()==="" || senha.trim()===""){
-            return Alert.alert("Ei!!", "Você não inseriu todos os dados")
+    const singIn = () => {
+        if (email.trim() === "" || senha.trim() === "") {
+            return Alert.alert("Ei!!", "Você não inseriu todos os dados");
         }
         setLoading(true);
-        signInWithEmailAndPassword(auth,email,senha).then(({user})=>{
+        signInWithEmailAndPassword(auth, email, senha).then(({user}) => {
             setLoading(false);
-        }).catch((err)=>{
-            setLoading(true);
+        }).catch((error) => {
+            setLoading(false);  // Corrigido para garantir que o estado de loading seja desativado após um erro
+            Alert.alert("Erro de Login", error.message);  // Mostra uma mensagem de erro mais específica
         });
     };
-
-    const singUp = () =>{
-        if(nome.trim()==="" || email.trim()==="" || senha.trim()===""){
-            return Alert.alert("Ei!!", "Você não inseriu todos os dados")
+    
+    const singUp = () => {
+        if (nome.trim() === "" || email.trim() === "" || senha.trim() === "") {
+            return Alert.alert("Ei!!", "Você não inseriu todos os dados");
         }
         setLoading(true);
-        createUserWithEmailAndPassword(auth,email,senha).then(({user})=>{
-            updateProfile(user,{displayName:nome})
-            setLoading(false);
-        }).catch((err)=>{
-            setLoading(false);
+        createUserWithEmailAndPassword(auth, email, senha).then(({user}) => {
+            updateProfile(user, {displayName: nome}).then(() => {
+                setLoading(false);
+            });
+        }).catch((error) => {
+            setLoading(false);  // Garante que o loading seja desativado em caso de erro
+            Alert.alert("Erro ao Registrar", error.message);  // Mostra uma mensagem de erro mais específica
         });
     };
 
