@@ -2,15 +2,27 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { useNavigation } from "@react-navigation/native";
+import useAuth from '../hooks/useAuth'; // Importe seu hook de autenticação
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Certifique-se de importar as funções necessárias do Firestore
+import { db } from '../firebase'; // Certifique-se de que db está corretamente importado
 
 const ChatRow = ({ friendDetails }) => {
   const navigation = useNavigation();
+  const { user } = useAuth(); // Obtenha o usuário autenticado
 
   // Função para bloquear um usuário
-  const handleBlockUser = (userId) => {
-    // Aqui você pode adicionar a lógica para bloquear o usuário
-    Alert.alert("Bloquear", "Usuário bloqueado com sucesso!"); // Exemplo de feedback
-    // Implemente a lógica de bloqueio no seu Firebase ou outro backend
+  const handleBlockUser = async (userId) => {
+    if (!user) return; // Verifica se o usuário está definido
+    const blockerId = user.uid; // ID do usuário que está bloqueando
+    const userRef = doc(db, "users", blockerId, "blockedUsers", userId);
+
+    try {
+      await setDoc(userRef, { blockedAt: serverTimestamp() }); // Armazena a data de bloqueio
+      Alert.alert("Bloquear", "Usuário bloqueado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao bloquear usuário:", error);
+      Alert.alert("Erro", "Não foi possível bloquear o usuário.");
+    }
   };
 
   return (

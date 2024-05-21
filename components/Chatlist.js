@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text } from 'react-native';
 import useAuth from '../hooks/useAuth';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import { db } from "../firebase";
 import ChatRow from '../components/Chatrow';
 import tw from "tailwind-react-native-classnames";
@@ -9,7 +9,20 @@ import tw from "tailwind-react-native-classnames";
 const Chatlist = () => {
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
-  const [conversations, setConversations] = useState([]);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+
+  useEffect(() => {
+    // Carregar usuários bloqueados
+    if (user) {
+      const blockedRef = collection(db, "users", user.uid, "blockedUsers");
+      getDocs(blockedRef).then(snapshot => {
+        const blockedIds = snapshot.docs.map(doc => doc.id); // Obter IDs de usuários bloqueados
+        setBlockedUsers(blockedIds);
+      }).catch(error => {
+        console.error("Erro ao carregar usuários bloqueados:", error);
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -20,9 +33,8 @@ const Chatlist = () => {
         }
         const friendList = snapshot.docs.map(doc => {
           const friendData = { friendId: doc.id, ...doc.data() };
-          console.log("Friend data:", friendData);
           return friendData;
-        });
+        }).filter(friend => !blockedUsers.includes(friend.friendId)); // Filtrar amigos não bloqueados
         setFriends(friendList);
       }, error => {
         console.error("Error fetching friends:", error);
@@ -30,24 +42,7 @@ const Chatlist = () => {
 
       return () => unsubscribe();
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      const conversationsRef = query(collection(db, "conversations"), where("participants", "array-contains", user.uid));
-      const unsubscribe = onSnapshot(conversationsRef, (snapshot) => {
-        const loadedConversations = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setConversations(loadedConversations);
-      }, error => {
-        console.error("Erro ao carregar conversas:", error);
-      });
-  
-      return () => unsubscribe();
-    }
-  }, [user]);
+  }, [user, blockedUsers]); // Dependência de blockedUsers adicionada
 
   console.log("Friends list:", friends);
 
