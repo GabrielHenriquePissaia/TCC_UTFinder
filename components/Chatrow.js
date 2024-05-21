@@ -11,17 +11,32 @@ const ChatRow = ({ friendDetails }) => {
   const { user } = useAuth(); // Obtenha o usuário autenticado
 
   // Função para bloquear um usuário
-  const handleBlockUser = async (userId) => {
-    if (!user) return; // Verifica se o usuário está definido
-    const blockerId = user.uid; // ID do usuário que está bloqueando
-    const userRef = doc(db, "users", blockerId, "blockedUsers", userId);
-
+  const handleBlockUser = async (friendDetails) => {
+    if (!user || !user.uid || !friendDetails) {
+      Alert.alert("Erro", "Detalhes do usuário não disponíveis.");
+      return;
+    }
+  
+    const { friendId, displayName, photoURL } = friendDetails;
+    if (!friendId || !displayName || !photoURL) {
+      Alert.alert("Erro", "Informações incompletas do amigo para bloquear.");
+      return;
+    }
+  
+    const blockerId = user.uid;
+    const blockData = {
+      blockedAt: serverTimestamp(),
+      displayName: displayName,
+      photoURL: photoURL,
+    };
+  
     try {
-      await setDoc(userRef, { blockedAt: serverTimestamp() }); // Armazena a data de bloqueio
+      const userRef = doc(db, "users", blockerId, "blockedUsers", friendId);
+      await setDoc(userRef, blockData);
       Alert.alert("Bloquear", "Usuário bloqueado com sucesso!");
     } catch (error) {
       console.error("Erro ao bloquear usuário:", error);
-      Alert.alert("Erro", "Não foi possível bloquear o usuário.");
+      Alert.alert("Erro ao bloquear usuário", error.message);
     }
   };
 
@@ -41,7 +56,7 @@ const ChatRow = ({ friendDetails }) => {
       </TouchableOpacity>
       <TouchableOpacity
         style={tw.style("bg-red-500 p-2 rounded-md")}
-        onPress={() => handleBlockUser(friendDetails.friendId)}
+        onPress={() => handleBlockUser(friendDetails)} // Mudança aqui para passar o objeto completo
       >
         <Text style={tw.style("text-white text-sm font-semibold")}>Bloquear</Text>
       </TouchableOpacity>
