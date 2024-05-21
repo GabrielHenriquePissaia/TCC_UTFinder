@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, getDoc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, onSnapshot, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,16 +12,15 @@ import Slider from '@react-native-community/slider';
 import { serverTimestamp } from 'firebase/firestore';
 
 const Home = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [friends, setFriends] = useState([]);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [distanceFilter, setDistanceFilter] = useState(200);
   const navigation = useNavigation();
-  const [isRequestModalVisible, setIsRequestModalVisible] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState(null);
 
   const haversineDistance = (coords1, coords2) => {
     const R = 6371; // Raio da terra
@@ -38,14 +37,14 @@ const Home = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      if (user && user.location) { // Verifica se user existe e tem uma localização definida
+      if (user && user.location) {
         const querySnapshot = await getDocs(collection(db, "users"));
         const fetchedUsers = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           distance: haversineDistance(user.location, doc.data().location || { latitude: 0, longitude: 0 })
         })).filter(user => user.distance <= distanceFilter);
-  
+
         setUsers(fetchedUsers);
         setFilteredUsers(fetchedUsers);
       } else {
@@ -54,25 +53,21 @@ const Home = () => {
         setFilteredUsers([]);
       }
     };
-  
+
     fetchUsers();
   }, [user, user?.location, distanceFilter]);
 
   useEffect(() => {
     if (user) {
-        const unsubscribe = onSnapshot(collection(db, "friendRequests", user.uid, "requests"), (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-            if (requests.length > 0) {
-              setCurrentRequest(requests[0]); // Assume que você só lida com uma por vez
-              setIsRequestModalVisible(true); // Mostra o modal
-          }
-        });
-        return () => unsubscribe();
+      const friendsRef = collection(db, "friends", user.uid, "userFriends");
+      getDocs(friendsRef).then(snapshot => {
+        const friendList = snapshot.docs.map(doc => doc.id);
+        setFriends(friendList);
+      }).catch(error => {
+        console.error("Erro ao buscar amigos:", error);
+      });
     }
-}, [user]);
+  }, [user]);
 
   const applyFilters = () => {
     const filtered = users.filter(user =>
@@ -88,52 +83,21 @@ const Home = () => {
   };
 
   const handleAddContact = async (targetUserId) => {
+    if (friends.includes(targetUserId)) {
+      Alert.alert("Erro", "Você já é amigo deste usuário.");
+      return;
+    }
     try {
-        // Adiciona a solicitação de amizade no Firestore
-        await setDoc(doc(db, "friendRequests", targetUserId, "requests", user.uid), {
-            requesterId: user.uid,
-            requesterName: user.displayName,
-            status: "pending",
-            timestamp: serverTimestamp(),
-        });
-        console.log("Solicitação enviada com sucesso!");
-      } catch (error) {
-          console.error("Erro ao enviar solicitação de amizade:", error);
-      }
-  };
-
-  const handleAcceptRequest = async (requestId, requesterId) => {
-    // Obter os detalhes do usuário solicitante
-    const userDoc = await getDoc(doc(db, "users", requesterId));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-  
-      // Adiciona ambos os usuários à lista de amigos um do outro com detalhes adicionais
-      await setDoc(doc(db, "friends", user.uid, "userFriends", requesterId), {
-        friendId: requesterId,
-        displayName: userData.displayName,
-        photoURL: userData.photoURL,
+      await setDoc(doc(db, "friendRequests", targetUserId, "requests", user.uid), {
+        requesterId: user.uid,
+        requesterName: user.displayName,
+        requesterPhotoURL: user.photoURL,
+        status: "pending",
+        timestamp: serverTimestamp(),
       });
-  
-      // Também adiciona o usuário atual à lista de amigos do solicitante
-      await setDoc(doc(db, "friends", requesterId, "userFriends", user.uid), {
-        friendId: user.uid,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      });
-  
-      // Criar documento de conversa
-      const conversationId = [user.uid, requesterId].sort().join('_');
-      await setDoc(doc(db, "conversations", conversationId), {
-        participants: [user.uid, requesterId],
-        lastMessage: {},
-      });
-  
-      // Remover a solicitação após aceita
-      await deleteDoc(doc(db, "friendRequests", user.uid, "requests", requestId));
-      setIsRequestModalVisible(false);
-    } else {
-      console.error("Não foi possível encontrar os dados do usuário solicitante.");
+      Alert.alert("Solicitação enviada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao enviar solicitação de amizade:", error);
     }
   };
 
@@ -215,8 +179,11 @@ const Home = () => {
               <Text style={styles.details}>Curso: {item.curso}</Text>
               <Text style={styles.details}>Ano de Formação: {item.anoFormacao}</Text>
               <Text style={styles.details}>Campus: {item.campus}</Text>
-              <TouchableOpacity style={styles.button} onPress={() => handleAddContact(item.id)}>
-                <Text style={styles.buttonText}>Adicionar contato</Text>
+              <TouchableOpacity 
+                style={[styles.button, friends.includes(item.id) ? styles.buttonDisabled : styles.buttonEnabled]} 
+                onPress={() => handleAddContact(item.id)}
+                disabled={friends.includes(item.id)}
+              ><Text style={styles.buttonText}>{friends.includes(item.id) ? 'Amigo' : 'Adicionar contato'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -257,30 +224,6 @@ const Home = () => {
           </View>
         </View>
       </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isRequestModalVisible}
-        onRequestClose={() => setIsRequestModalVisible(false)}
-    >
-        <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-                <Text style={styles.modalText}>Você tem uma solicitação de amizade de {currentRequest?.requesterName}</Text>
-                <TouchableOpacity
-                    style={[styles.button, styles.buttonClose]}
-                    onPress={() => handleAcceptRequest(currentRequest.id, currentRequest.requesterId)}
-                >
-                    <Text style={styles.buttonText}>Aceitar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.button, styles.buttonClose]}
-                    onPress={() => handleRejectRequest(currentRequest.id)}
-                >
-                    <Text style={styles.buttonText}>Rejeitar</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    </Modal>
     </SafeAreaView>
   );
 };
@@ -378,6 +321,12 @@ const styles = StyleSheet.create({
   },
   buttonClose: {
     backgroundColor: '#2196F3',
+  },
+  buttonDisabled: {
+    backgroundColor: 'gray',
+  },
+  buttonEnabled: {
+    backgroundColor: '#007bff',
   }
 });
 
