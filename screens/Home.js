@@ -176,6 +176,7 @@ const Home = () => {
               <Text style={styles.name}>{item.displayName}</Text>
               <Text style={styles.details}>Curso: {item.curso}</Text>
               <Text style={styles.details}>Ano de Formação: {item.anoFormacao}</Text>
+              <Text style={styles.details}>Universidade: {item.universidade}</Text>
               <Text style={styles.details}>Campus: {item.campus}</Text>
               <TouchableOpacity 
                 style={[styles.button, friends.includes(item.id) ? styles.buttonDisabled : styles.buttonEnabled]} 
@@ -259,8 +260,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   avatar: {
-    width: 70,
-    height: 70,
+    width: 80,
+    height: 80,
     borderRadius: 35,
     marginRight: 15,
   },

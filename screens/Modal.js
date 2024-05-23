@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, Image, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import useAuth from '../hooks/useAuth';
@@ -16,13 +16,8 @@ const Modal = () => {
   const [image, setImage] = useState('');
   const [curso, setCurso] = useState(null);
   const [anoFormacao, setAnoFormacao] = useState(null);
-  const [selectedState, setSelectedState] = useState(null);
-  const [location, setLocation] = useState({
-    latitude: -23.5505,
-    longitude: -46.6333,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const [campus, setCampus] = useState(null);
+  const [location, setLocation] = useState(null);
 
   const cursoData = [
     { label: 'Engenharia de Software', value: 'Engenharia de Software' },
@@ -53,66 +48,61 @@ const Modal = () => {
     { label: '2024-2', value: '2024-2' },
   ];
 
-  const estadosBrasileiros = [
-  { label: 'Acre', value: { latitude: -9.0238, longitude: -70.8120, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Alagoas', value: { latitude: -9.5713, longitude: -36.7820, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Amapá', value: { latitude: 0.9020, longitude: -52.0030, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Amazonas', value: { latitude: -3.4168, longitude: -65.8561, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Bahia', value: { latitude: -12.5797, longitude: -41.7007, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Ceará', value: { latitude: -5.4984, longitude: -39.3206, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Distrito Federal', value: { latitude: -15.7998, longitude: -47.8645, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Espírito Santo', value: { latitude: -19.1834, longitude: -40.3089, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Goiás', value: { latitude: -15.8270, longitude: -49.8362, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Maranhão', value: { latitude: -4.9609, longitude: -45.2744, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Mato Grosso', value: { latitude: -12.6819, longitude: -56.9211, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Mato Grosso do Sul', value: { latitude: -20.7722, longitude: -54.7852, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Minas Gerais', value: { latitude: -18.5122, longitude: -44.5550, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Pará', value: { latitude: -3.4168, longitude: -52.0364, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Paraíba', value: { latitude: -7.2400, longitude: -36.7820, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Paraná', value: { latitude: -24.4842, longitude: -51.7558, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Pernambuco', value: { latitude: -8.8137, longitude: -36.9541, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Piauí', value: { latitude: -7.7183, longitude: -42.7289, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Rio de Janeiro', value: { latitude: -22.9068, longitude: -43.1729, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Rio Grande do Norte', value: { latitude: -5.4026, longitude: -36.9541, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Rio Grande do Sul', value: { latitude: -30.0346, longitude: -51.2177, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Rondônia', value: { latitude: -10.8853, longitude: -61.9517, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Roraima', value: { latitude: 1.9222, longitude: -61.8567, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Santa Catarina', value: { latitude: -27.2423, longitude: -50.2189, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'São Paulo', value: { latitude: -23.5505, longitude: -46.6333, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Sergipe', value: { latitude: -10.9472, longitude: -37.0731, latitudeDelta: 0.5, longitudeDelta: 0.5 } },
-  { label: 'Tocantins', value: { latitude: -10.1753, longitude: -48.2982, latitudeDelta: 0.5, longitudeDelta: 0.5 } }
+const campusData = [
+  { label: 'Curitiba', value: 'Curitiba' },
+  { label: 'Cornélio Procópio', value: 'Cornélio Procópio' },
+  { label: 'Campo Mourão', value: 'Campo Mourão' },
+  { label: 'Medianeira', value: 'Medianeira' },
+  { label: 'Pato Branco', value: 'Pato Branco' },
+  { label: 'Ponta Grossa', value: 'Ponta Grossa' },
+  { label: 'Dois Vizinhos', value: 'Dois Vizinhos' },
+  { label: 'Londrina', value: 'Londrina' },
+  { label: 'Toledo', value: 'Toledo' },
+  { label: 'Apucarana', value: 'Apucarana' },
+  { label: 'Francisco Beltrão', value: 'Francisco Beltrão' },
+  { label: 'Guarapuava', value: 'Guarapuava' },
+  { label: 'Santa Helena', value: 'Santa Helena' }
 ];
 
-  const handleSelectState = (state) => {
-    setSelectedState(state.label);
-    setLocation(state.value);
-  };
+  const handleGetLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
+      return;
+    }
 
-  const handleMapPress = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
+    let currentLocation = await Location.getCurrentPositionAsync({});
     setLocation({
-      latitude,
-      longitude,
+      latitude: currentLocation.coords.latitude,
+      longitude: currentLocation.coords.longitude,
       latitudeDelta: 0.005,
-      longitudeDelta: 0.005,
+      longitudeDelta: 0.005
     });
   };
 
-  const updateUserProfile = () => {
-    setDoc(doc(db, "users", user.uid), {
-      id: user.uid,
-      displayName: user.displayName,
-      photoURL: image,
-      curso,
-      campus: 'UTFPR',
-      anoFormacao,
-      location,
-      timestamp,
-    }).then(() => {
+  const handleNoLocation = () => {
+    setLocation(null);
+    Alert.alert('Localização não compartilhada', 'Você optou por não compartilhar sua localização.');
+  };
+
+  const updateUserProfile = async () => {
+    // Removido a checagem que exigia uma localização
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        id: user.uid,
+        displayName: user.displayName,
+        photoURL: image,
+        curso,
+        campus,
+        universidade: 'UTFPR',
+        anoFormacao,
+        location,  // Aqui ainda passamos location, pode ser null ou um objeto de localização
+        timestamp,
+      });
       navigation.navigate("Home");
-    }).catch((err) => {
-      Alert.alert("Error", err.message);
-    });
+    } catch (err) {
+      Alert.alert("Erro ao atualizar perfil", err.message);
+    }
   };
 
   return (
@@ -122,30 +112,31 @@ const Modal = () => {
       <TextInput placeholder="Coloque o URL de sua foto de perfil" style={tw.style("text-center text-xl pb-2")} keyboardType='url' value={image} onChangeText={setImage} />
       <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu Curso</Text>
       <Dropdown style={styles.dropdown} data={cursoData} labelField="label" valueField="value" placeholder="Selecione o curso" value={curso} onChange={item => setCurso(item.value)} />
-      <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu ano de formação</Text>
-      <Dropdown style={styles.dropdown} data={anoFormacaoData} labelField="label" valueField="value" placeholder="Selecione o ano" value={anoFormacao} onChange={item => setAnoFormacao(item.value)} />
-      <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Selecione seu Estado</Text>
+      <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu Campus</Text>
       <Dropdown
         style={styles.dropdown}
-        data={estadosBrasileiros}
+        data={campusData}
         labelField="label"
         valueField="value"
-        placeholder="Selecione o estado"
-        value={selectedState}
-        onChange={handleSelectState}
+        placeholder="Selecione o campus"
+        value={campus}
+        onChange={item => setCampus(item.value)}
       />
-      <MapView
-        style={styles.mapStyle}
-        region={location}
-        onPress={handleMapPress}
-        showsUserLocation={true}
+      <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu ano de formação</Text>
+      <Dropdown style={styles.dropdown} data={anoFormacaoData} labelField="label" valueField="value" placeholder="Selecione o ano" value={anoFormacao} onChange={item => setAnoFormacao(item.value)} />
+      <TouchableOpacity
+        style={tw.style("w-64 p-3 rounded-xl bg-blue-500", { marginBottom: 20 })}
+        onPress={handleGetLocation}
       >
-        <Marker coordinate={location} />
-      </MapView>
-      <TouchableOpacity style={tw.style("w-64 p-3 rounded-xl bg-blue-500")} onPress={() => console.log("Localização final:", location)}>
-        <Text style={tw.style("text-center text-xl text-white")}>Capturar Localização</Text>
+        <Text style={tw.style("text-center text-xl text-white")}>Usar minha localização atual</Text>
       </TouchableOpacity>
-      <TouchableOpacity disabled={!image || !curso || !anoFormacao || !location} style={tw.style("w-64 p-3 rounded-xl bg-gray-400", { marginBottom: 20 })} onPress={updateUserProfile}>
+      <TouchableOpacity
+        style={tw.style("w-64 p-3 rounded-xl bg-red-500", { marginBottom: 20 })}
+        onPress={handleNoLocation}
+      >
+        <Text style={tw.style("text-center text-xl text-white")}>Não compartilhar localização</Text>
+      </TouchableOpacity>
+      <TouchableOpacity disabled={!image || !curso || !anoFormacao } style={tw.style("w-64 p-3 rounded-xl bg-gray-400", { marginBottom: 20 })} onPress={updateUserProfile}>
         <Text style={tw.style("text-center text-xl")}>Atualizar Perfil</Text>
       </TouchableOpacity>
     </ScrollView>
