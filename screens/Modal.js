@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, Image, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import useAuth from '../hooks/useAuth';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db, timestamp } from '../firebase';
 import { useNavigation } from '@react-navigation/native';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -64,6 +64,19 @@ const campusData = [
   { label: 'Santa Helena', value: 'Santa Helena' }
 ];
 
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
+      const userData = doc.data();
+      setImage(userData.photoURL);
+      setCurso(userData.curso);
+      setAnoFormacao(userData.anoFormacao);
+      setCampus(userData.campus);
+      setLocation(userData.location);
+    });
+
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, [user.uid]);
+
   const handleGetLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -88,7 +101,6 @@ const campusData = [
   const updateUserProfile = async () => {
     try {
       await setDoc(doc(db, "users", user.uid), {
-        id: user.uid,
         displayName: user.displayName,
         photoURL: image,
         curso,
@@ -97,8 +109,8 @@ const campusData = [
         anoFormacao,
         location, 
         timestamp,
-      });
-      navigation.navigate("Inicio");
+      }, { merge: true });
+      Alert.alert("Perfil atualizado", "Seu perfil foi atualizado com sucesso!");
     } catch (err) {
       Alert.alert("Erro ao atualizar perfil", err.message);
     }
