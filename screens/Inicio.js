@@ -35,15 +35,21 @@ const Inicio = () => {
   return (
     <SafeAreaView style={tw.style("flex-1")}>
       <View style={styles.header}>
-          <TouchableOpacity onPress={logout}>
-            <Ionicons name="chevron-back-outline" size={34} color="#FF5864" />
-          </TouchableOpacity>
+        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+          <Ionicons name="log-out-outline" size={45} color="red" />
+          <Text style={styles.logoutText}>SAIR</Text>
+        </TouchableOpacity>
         </View>
       <ImageBackground style={tw.style('flex-1 justify-center items-center bg-yellow-500')}
         resizeMode="cover" source={require("../assets/BackgroundLogin.jpg")}
       >
-        <Text style={tw.style('text-2xl font-bold pb-10')}>Bem vindo {user ? user.displayName : ''}</Text>
+        <Text style={tw.style('text-2xl font-bold pb-10')}>Olá {user ? user.displayName : ''}</Text>
         <Text style={tw.style('pb-5 text-lg')}>O que deseja fazer?</Text>
+        {!profileComplete && (
+          <Text style={styles.warningText}>
+            Para usar nosso aplicativo, deve-se atualizar seus dados de cadastro.
+          </Text>
+        )}
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Modal')}>
           <Text style={styles.buttonText}>Atualizar Perfil</Text>
         </TouchableOpacity>
@@ -78,11 +84,27 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black', // Ensure text is visible
+    color: 'black', 
   },
   disabledButton: {
     opacity: 0.5,
-  }
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoutText: {
+    color: 'red',
+    marginLeft: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  warningText: {
+    color: 'red',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
 });
 
 export default Inicio;

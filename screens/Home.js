@@ -156,7 +156,7 @@ const Home = () => {
           <Ionicons name="chevron-back-outline" size={34} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
-          <Ionicons name="location" size={30} color={"#000000"}/>
+          <Ionicons name="happy" size={30} color={"#000000"}/>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Pedidos")}>
           <Ionicons name="people" size={24} color="black"/>
