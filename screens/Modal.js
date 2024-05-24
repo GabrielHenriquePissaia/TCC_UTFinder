@@ -86,7 +86,6 @@ const campusData = [
   };
 
   const updateUserProfile = async () => {
-    // Removido a checagem que exigia uma localização
     try {
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
@@ -96,10 +95,10 @@ const campusData = [
         campus,
         universidade: 'UTFPR',
         anoFormacao,
-        location,  // Aqui ainda passamos location, pode ser null ou um objeto de localização
+        location, 
         timestamp,
       });
-      navigation.navigate("Home");
+      navigation.navigate("Inicio");
     } catch (err) {
       Alert.alert("Erro ao atualizar perfil", err.message);
     }

@@ -19,6 +19,7 @@ const Home = () => {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedCampus, setSelectedCampus] = useState(null);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [distanceFilter, setDistanceFilter] = useState(200);
   const navigation = useNavigation();
@@ -73,7 +74,8 @@ const Home = () => {
   const applyFilters = () => {
     const filtered = users.filter(user =>
       (!selectedCourse || user.curso === selectedCourse) &&
-      (!selectedYear || user.anoFormacao === selectedYear)
+      (!selectedYear || user.anoFormacao === selectedYear) && 
+      (!selectedCampus || user.campus === selectedCampus)
     );
     setFilteredUsers(filtered);
     setIsFilterModalVisible(false);
@@ -129,6 +131,22 @@ const Home = () => {
     { label: '2023-2', value: '2023-2' },
     { label: '2024-1', value: '2024-1' },
     { label: '2024-2', value: '2024-2' },
+  ];
+
+  const campusData = [
+    { label: 'Curitiba', value: 'Curitiba' },
+    { label: 'Cornélio Procópio', value: 'Cornélio Procópio' },
+    { label: 'Campo Mourão', value: 'Campo Mourão' },
+    { label: 'Medianeira', value: 'Medianeira' },
+    { label: 'Pato Branco', value: 'Pato Branco' },
+    { label: 'Ponta Grossa', value: 'Ponta Grossa' },
+    { label: 'Dois Vizinhos', value: 'Dois Vizinhos' },
+    { label: 'Londrina', value: 'Londrina' },
+    { label: 'Toledo', value: 'Toledo' },
+    { label: 'Apucarana', value: 'Apucarana' },
+    { label: 'Francisco Beltrão', value: 'Francisco Beltrão' },
+    { label: 'Guarapuava', value: 'Guarapuava' },
+    { label: 'Santa Helena', value: 'Santa Helena' }
   ];
 
   return (
@@ -213,6 +231,15 @@ const Home = () => {
               placeholder="Selecione um ano"
               value={selectedYear}
               onChange={item => setSelectedYear(item.value)}
+            />
+            <Dropdown
+              style={styles.dropdown}
+              data={campusData}
+              labelField="label"
+              valueField="value"
+              placeholder="Selecione um campus"
+              value={selectedCampus}
+              onChange={item => setSelectedCampus(item.value)}
             />
             <TouchableOpacity
               style={[styles.button, styles.buttonClose]}
@@ -303,7 +330,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: 300,
-    height: 300,
+    height: 350,
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
