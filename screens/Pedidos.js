@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import tw from 'tailwind-react-native-classnames';
 import Header from '../components/Header';
 import { collection, onSnapshot, doc, deleteDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import tw from 'tailwind-react-native-classnames';
 
 const Pedidos = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
+  const navigation = useNavigation()
 
   useEffect(() => {
     if (user) {
@@ -74,8 +77,25 @@ const Pedidos = () => {
   };
 
   return (
-    <SafeAreaView style={tw.style("flex-1")}>
-      <Header title={"Pedidos de Amizade"} />
+    <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
+          <Ionicons name="chevron-back-outline" size={34} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Location")}>
+          <Ionicons name="happy" size={30} color={"#000000"}/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+          <Ionicons name="search-circle-sharp" size={36} color="black"/>
+        </TouchableOpacity>
+          <Ionicons name="people-outline" size={30} color="black"/>
+        <TouchableOpacity onPress={() => navigation.navigate("Bloqueios")}>
+          <Ionicons name="person-remove" size={24} color="black"/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
+          <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={requests}
         keyExtractor={item => item.id}
@@ -104,5 +124,17 @@ const Pedidos = () => {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc'
+  },
+})
 
 export default Pedidos;

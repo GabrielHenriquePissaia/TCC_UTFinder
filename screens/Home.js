@@ -158,11 +158,12 @@ const Home = () => {
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
           <Ionicons name="happy" size={30} color={"#000000"}/>
         </TouchableOpacity>
+          <Ionicons name="search-circle-outline" size={36} color="black"/>
         <TouchableOpacity onPress={() => navigation.navigate("Pedidos")}>
-          <Ionicons name="people" size={24} color="black"/>
+          <Ionicons name="people" size={30} color="black"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Bloqueios")}>
-          <Ionicons name="ban-sharp" size={24} color="black"/>
+          <Ionicons name="person-remove" size={24} color="black"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
           <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>

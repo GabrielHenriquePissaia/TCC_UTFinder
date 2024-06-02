@@ -83,14 +83,15 @@ const campusData = [
       Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
       return;
     }
-
-    let currentLocation = await Location.getCurrentPositionAsync({});
+  
+    let currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
     setLocation({
       latitude: currentLocation.coords.latitude,
       longitude: currentLocation.coords.longitude,
       latitudeDelta: 0.005,
       longitudeDelta: 0.005
     });
+    console.log("Localização atual:", currentLocation.coords); // Isso registrará as coordenadas atuais
   };
 
   const handleNoLocation = () => {

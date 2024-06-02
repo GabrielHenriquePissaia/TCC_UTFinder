@@ -54,10 +54,13 @@ const Inicio = () => {
           <Text style={styles.buttonText}>Atualizar Perfil</Text>
         </TouchableOpacity>
         <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Home')} disabled={!profileComplete}>
-          <Text style={styles.buttonText}>Procurar</Text>
+          <Text style={styles.buttonText}>Procurar Egresos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Location')} disabled={!profileComplete}>
+          <Text style={styles.buttonText}>Meu Perfil</Text>
         </TouchableOpacity>
         <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Chat')} disabled={!profileComplete}>
-          <Text style={styles.buttonText}>Conversar</Text>
+          <Text style={styles.buttonText}>Conversar com Amigos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Pedidos')} disabled={!profileComplete}>
           <Text style={styles.buttonText}>Pedidos de amizade</Text>

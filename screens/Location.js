@@ -8,10 +8,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { setDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const Profile = () => {
   const { user } = useAuth();
   const [location, setLocation] = useState(user.location);
+  const navigation = useNavigation()
 
   useEffect(() => {
     return () => {
@@ -54,8 +57,25 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView style={tw.style("flex-1")}>
-      <Header title={"Perfil"} />
+    <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
+          <Ionicons name="chevron-back-outline" size={34} color="black" />
+        </TouchableOpacity>
+          <Ionicons name="happy-outline" size={30} color={"#000000"}/>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+          <Ionicons name="search-circle-sharp" size={36} color="black"/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Pedidos")}>
+          <Ionicons name="people" size={30} color="black"/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Bloqueios")}>
+          <Ionicons name="person-remove" size={24} color="black"/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
+          <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
+        </TouchableOpacity>
+      </View>
       <ImageBackground style={tw.style('flex-1 justify-center items-center bg-yellow-500')}
           resizeMode="cover" source={require("../assets/BackgroundLogin.jpg")}
         >
@@ -163,6 +183,15 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc'
   },
 });
 
