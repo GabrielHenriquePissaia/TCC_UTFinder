@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, getDoc, onSnapshot, setDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, onSnapshot, setDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,33 +31,38 @@ const Home = () => {
     const deltaLat = (coords2.latitude - coords1.latitude) * Math.PI / 180;
     const deltaLon = (coords2.longitude - coords1.longitude) * Math.PI / 180;
 
-    const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
-              Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+              Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distancia em km
   };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (user && user.location) {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        const fetchedUsers = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          distance: haversineDistance(user.location, doc.data().location || { latitude: 0, longitude: 0 })
-        })).filter(user => user.distance <= distanceFilter);
+    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
+      const userData = doc.data();
+      fetchUsers(userData.location);
+    });
 
-        setUsers(fetchedUsers);
-        setFilteredUsers(fetchedUsers);
-      } else {
-        console.log("Usuário deslogado ou localização do usuário não informada");
-        setUsers([]);
-        setFilteredUsers([]);
-      }
-    };
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, [user.uid, distanceFilter]);
 
-    fetchUsers();
-  }, [user, user?.location, distanceFilter]);
+  const fetchUsers = async (location) => {
+    if (user && location) {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const fetchedUsers = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        distance: haversineDistance(location, doc.data().location || { latitude: 0, longitude: 0 })
+      })).filter(user => user.distance <= distanceFilter);
+
+      setUsers(fetchedUsers);
+      setFilteredUsers(fetchedUsers);
+    } else {
+      console.log("Usuário deslogado ou localização do usuário não informada");
+      setUsers([]);
+      setFilteredUsers([]);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -74,7 +79,7 @@ const Home = () => {
   const applyFilters = () => {
     const filtered = users.filter(user =>
       (!selectedCourse || user.curso === selectedCourse) &&
-      (!selectedYear || user.anoFormacao === selectedYear) && 
+      (!selectedYear || user.anoFormacao === selectedYear) &&
       (!selectedCampus || user.campus === selectedCampus)
     );
     setFilteredUsers(filtered);
