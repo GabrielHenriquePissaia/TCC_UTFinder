@@ -50,7 +50,7 @@ const Home = () => {
         setUsers(fetchedUsers);
         setFilteredUsers(fetchedUsers);
       } else {
-        console.log("Usuário deslogado ou localização do usuário não disponível");
+        console.log("Usuário deslogado ou localização do usuário não informada");
         setUsers([]);
         setFilteredUsers([]);
       }

@@ -48,30 +48,32 @@ const Modal = () => {
     { label: '2024-2', value: '2024-2' },
   ];
 
-const campusData = [
-  { label: 'Curitiba', value: 'Curitiba' },
-  { label: 'Cornélio Procópio', value: 'Cornélio Procópio' },
-  { label: 'Campo Mourão', value: 'Campo Mourão' },
-  { label: 'Medianeira', value: 'Medianeira' },
-  { label: 'Pato Branco', value: 'Pato Branco' },
-  { label: 'Ponta Grossa', value: 'Ponta Grossa' },
-  { label: 'Dois Vizinhos', value: 'Dois Vizinhos' },
-  { label: 'Londrina', value: 'Londrina' },
-  { label: 'Toledo', value: 'Toledo' },
-  { label: 'Apucarana', value: 'Apucarana' },
-  { label: 'Francisco Beltrão', value: 'Francisco Beltrão' },
-  { label: 'Guarapuava', value: 'Guarapuava' },
-  { label: 'Santa Helena', value: 'Santa Helena' }
-];
+  const campusData = [
+    { label: 'Curitiba', value: 'Curitiba' },
+    { label: 'Cornélio Procópio', value: 'Cornélio Procópio' },
+    { label: 'Campo Mourão', value: 'Campo Mourão' },
+    { label: 'Medianeira', value: 'Medianeira' },
+    { label: 'Pato Branco', value: 'Pato Branco' },
+    { label: 'Ponta Grossa', value: 'Ponta Grossa' },
+    { label: 'Dois Vizinhos', value: 'Dois Vizinhos' },
+    { label: 'Londrina', value: 'Londrina' },
+    { label: 'Toledo', value: 'Toledo' },
+    { label: 'Apucarana', value: 'Apucarana' },
+    { label: 'Francisco Beltrão', value: 'Francisco Beltrão' },
+    { label: 'Guarapuava', value: 'Guarapuava' },
+    { label: 'Santa Helena', value: 'Santa Helena' }
+  ];
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
       const userData = doc.data();
-      setImage(userData.photoURL);
-      setCurso(userData.curso);
-      setAnoFormacao(userData.anoFormacao);
-      setCampus(userData.campus);
-      setLocation(userData.location);
+      if (userData) {
+        setImage(userData.photoURL || '');
+        setCurso(userData.curso || null);
+        setAnoFormacao(userData.anoFormacao || null);
+        setCampus(userData.campus || null);
+        setLocation(userData.location || null);
+      }
     });
 
     return () => unsubscribe(); // Cleanup subscription on unmount
