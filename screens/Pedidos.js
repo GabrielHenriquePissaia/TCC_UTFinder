@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../components/Header';
 import { collection, onSnapshot, doc, deleteDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
@@ -12,7 +11,7 @@ import tw from 'tailwind-react-native-classnames';
 const Pedidos = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
-  const navigation = useNavigation()
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (user) {
@@ -21,7 +20,6 @@ const Pedidos = () => {
           id: doc.id,
           ...doc.data()
         }));
-        console.log("Loaded requests:", loadedRequests);  // Adicione esta linha para debugar
         setRequests(loadedRequests);
       });
       return () => unsubscribe();
@@ -29,35 +27,30 @@ const Pedidos = () => {
   }, [user]);
 
   const handleAcceptRequest = async (requestId, requesterId) => {
-    // Obter os detalhes do usuário solicitante
     const userDoc = await getDoc(doc(db, "users", requesterId));
     if (userDoc.exists()) {
       const userData = userDoc.data();
-  
-      // Adiciona ambos os usuários à lista de amigos um do outro com detalhes adicionais
+
       await setDoc(doc(db, "friends", user.uid, "userFriends", requesterId), {
         friendId: requesterId,
         displayName: userData.displayName,
         photoURL: userData.photoURL,
       });
-  
-      // Também adiciona o usuário atual à lista de amigos do solicitante
+
       await setDoc(doc(db, "friends", requesterId, "userFriends", user.uid), {
         friendId: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
       });
-  
-      // Criar documento de conversa
+
       const conversationId = [user.uid, requesterId].sort().join('_');
       await setDoc(doc(db, "conversations", conversationId), {
         participants: [user.uid, requesterId],
         lastMessage: {},
       });
-  
-      // Remover a solicitação após aceita
+
       await deleteDoc(doc(db, "friendRequests", user.uid, "requests", requestId));
-      setIsRequestModalVisible(false);
+      Alert.alert("Solicitação Aceita", "Você aceitou a solicitação de amizade!");
     } else {
       console.error("Não foi possível encontrar os dados do usuário solicitante.");
     }
@@ -65,9 +58,7 @@ const Pedidos = () => {
 
   const handleRejectRequest = async (requestId) => {
     try {
-      // Simplesmente deleta o documento da solicitação de amizade do Firestore
       await deleteDoc(doc(db, "friendRequests", user.uid, "requests", requestId));
-      // Atualiza a lista de solicitações para refletir a mudança na UI
       setRequests(prevRequests => prevRequests.filter(request => request.id !== requestId));
       Alert.alert("Solicitação Rejeitada", "A solicitação de amizade foi rejeitada com sucesso.");
     } catch (error) {
