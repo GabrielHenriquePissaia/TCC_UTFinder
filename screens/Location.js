@@ -9,23 +9,31 @@ import { useNavigation } from '@react-navigation/native';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const Profile = () => {
+const Location = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState({});
-  const [location, setLocation] = useState(user.location);
+  const [location, setLocation] = useState(null);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
       const userData = doc.data();
-      setProfileData(userData);
-      setLocation(userData?.location);
+      setProfileData(userData || {});
+      setLocation(userData?.location || null);
       setIsProfileComplete(userData?.curso && userData?.anoFormacao && userData?.universidade);
     });
 
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, [user.uid]);
+
+  if (!profileData) {
+    return (
+      <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100 justify-center items-center")}>
+        <Text style={tw.style("text-lg text-gray-500")}>Carregando...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
@@ -166,4 +174,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Profile;
+export default Location;
