@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Alert, TextInput } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs, doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -16,7 +16,6 @@ const Home = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [selectedYear, setSelectedYear] = useState(null);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [distanceFilter, setDistanceFilter] = useState(200);
@@ -81,17 +80,15 @@ const Home = () => {
     }
   }, [user]);
 
-  const applyFilters = () => {
+  useEffect(() => {
     const filtered = users.filter(user =>
-      (!selectedYear || user.anoFormacao === selectedYear)
+      (!selectedYear || user.anoFormacao === selectedYear) &&
+      (user.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.curso.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.campus.toLowerCase().includes(searchText.toLowerCase()))
     );
     setFilteredUsers(filtered);
-    setIsFilterModalVisible(false);
-  };
-
-  const handleIconClick = () => {
-    setIsFilterModalVisible(true);
-  };
+  }, [searchText, selectedYear, users]);
 
   const handleAddContact = async (targetUserId) => {
     if (friends.includes(targetUserId)) {
@@ -112,24 +109,20 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    const filtered = users.filter(user =>
-      user.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.curso.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.campus.toLowerCase().includes(searchText.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [searchText, users]);
+  const handleClearFilters = () => {
+    setSearchText('');
+    setSelectedYear(null);
+  };
 
   const yearData = [
-    { label: '2009', value: 2017 },
-    { label: '2010', value: 2018 },
-    { label: '2011', value: 2019 },
-    { label: '2012', value: 2020 },
-    { label: '2013', value: 2021 },
-    { label: '2014', value: 2022 },
-    { label: '2015', value: 2023 },
-    { label: '2016', value: 2024 },
+    { label: '2009', value: 2009 },
+    { label: '2010', value: 2010 },
+    { label: '2011', value: 2011 },
+    { label: '2012', value: 2012 },
+    { label: '2013', value: 2013 },
+    { label: '2014', value: 2014 },
+    { label: '2015', value: 2015 },
+    { label: '2016', value: 2016 },
     { label: '2017', value: 2017 },
     { label: '2018', value: 2018 },
     { label: '2019', value: 2019 },
@@ -173,15 +166,31 @@ const Home = () => {
           onValueChange={setDistanceFilter}
         />
       </View>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Pesquisar..."
-        value={searchText}
-        onChangeText={setSearchText}
-      />
-      <TouchableOpacity onPress={handleIconClick}>
-        <Ionicons name="filter-circle" size={40} color="#007bff" />
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', margin: 10 }}>
+        <TextInput
+          style={[styles.searchInput, { flex: 1, marginRight: 5 }]}
+          placeholder="Pesquisar..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        <Dropdown
+          style={[styles.dropdown, { flex: 1, marginLeft: 5 }]}
+          data={yearData}
+          labelField="label"
+          valueField="value"
+          placeholder="Selecione um ano"
+          value={selectedYear}
+          onChange={item => setSelectedYear(item.value)}
+        />
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+        <TouchableOpacity 
+          style={styles.clearButton} 
+          onPress={handleClearFilters}
+        >
+          <Text style={styles.buttonText}>Limpar Filtros</Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={filteredUsers.filter(u => user && u.id !== user.uid)}
         keyExtractor={item => item.id}
@@ -205,32 +214,6 @@ const Home = () => {
           </View>
         )}
       />
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isFilterModalVisible}
-        onRequestClose={() => setIsFilterModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Dropdown
-              style={styles.dropdown}
-              data={yearData}
-              labelField="label"
-              valueField="value"
-              placeholder="Selecione um ano"
-              value={selectedYear}
-              onChange={item => setSelectedYear(item.value)}
-            />
-            <TouchableOpacity
-              style={[styles.button, styles.buttonClose]}
-              onPress={applyFilters}
-            >
-              <Text style={styles.buttonText}>Procurar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -258,7 +241,6 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 5,
-    margin: 10,
     paddingHorizontal: 10,
   },
   card: {
@@ -298,49 +280,26 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
   },
+  buttonDisabled: {
+    backgroundColor: 'gray',
+  },
+  buttonEnabled: {
+    backgroundColor: '#007bff',
+  },
   buttonText: {
     color: 'white',
     fontSize: 14,
     textAlign: 'center',
   },
   dropdown: {
-    width: 250,
-    margin: 16,
-    height: 50,
-    borderBottomColor: 'gray',
-    borderBottomWidth: 0.5,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    width: 300,
-    height: 350,
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  buttonDisabled: {
-    backgroundColor: 'gray',
-  },
-  buttonEnabled: {
-    backgroundColor: '#007bff',
+  clearButton: {
+    backgroundColor: '#ff6347',
+    padding: 10,
+    borderRadius: 5,
   }
 });
 
