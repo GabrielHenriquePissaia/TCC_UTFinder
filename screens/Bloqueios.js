@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../components/Header';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
-import { db } from "../firebase";
+import { collection, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import BlockedUserRow from '../components/BlockedUserRow';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,28 +17,22 @@ const Bloqueios = () => {
   useEffect(() => {
     if (user) {
       const blockedRef = collection(db, "users", user.uid, "blockedUsers");
-      getDocs(blockedRef).then(snapshot => {
+      const unsubscribe = onSnapshot(blockedRef, (snapshot) => {
         const users = snapshot.docs.map(doc => ({
           userId: doc.id,
           ...doc.data(),
         }));
         setBlockedUsers(users);
-      }).catch(error => {
-        console.error("Erro ao carregar usuários bloqueados:", error);
       });
+
+      return () => unsubscribe();
     }
   }, [user]);
 
   const handleUnblockUser = async (userId) => {
     try {
-      // Remover o usuário da lista de bloqueados do usuário atual
       await deleteDoc(doc(db, "users", user.uid, "blockedUsers", userId));
-      // Remover o usuário atual da lista de 'bloqueado por' do usuário desbloqueado
       await deleteDoc(doc(db, "users", userId, "blockedByUser", user.uid));
-  
-      // Atualizar a lista de bloqueados localmente para refletir a mudança
-      setBlockedUsers(prev => prev.filter(u => u.userId !== userId));
-  
       Alert.alert("Desbloquear", "Usuário desbloqueado com sucesso!");
     } catch (error) {
       console.error("Erro ao desbloquear usuário:", error);
@@ -54,17 +47,17 @@ const Bloqueios = () => {
           <Ionicons name="chevron-back-outline" size={34} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
-          <Ionicons name="happy" size={30} color={"#000000"}/>
+          <Ionicons name="happy" size={30} color={"#000000"} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-          <Ionicons name="search-circle-sharp" size={36} color="black"/>
+          <Ionicons name="search-circle-sharp" size={36} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Pedidos")}>
-          <Ionicons name="people" size={30} color="black"/>
+          <Ionicons name="people" size={30} color="black" />
         </TouchableOpacity>
-          <Ionicons name="person-remove-outline" size={24} color="black"/>
+        <Ionicons name="person-remove-outline" size={24} color="black" />
         <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
-          <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
+          <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"} />
         </TouchableOpacity>
       </View>
       <View style={tw.style("flex-1")}>
@@ -96,6 +89,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc'
   },
-})
+});
 
 export default Bloqueios;

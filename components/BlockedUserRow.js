@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import tw from "tailwind-react-native-classnames";
-import { useNavigation } from "@react-navigation/native";
 
 const BlockedUserRow = ({ userDetails, onUnblock }) => {
   const { displayName, photoURL, userId } = userDetails;

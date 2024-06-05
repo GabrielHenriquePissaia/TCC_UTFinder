@@ -2,49 +2,46 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { useNavigation } from "@react-navigation/native";
-import useAuth from '../hooks/useAuth'; // Importe seu hook de autenticação
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Certifique-se de importar as funções necessárias do Firestore
-import { db } from '../firebase'; // Certifique-se de que db está corretamente importado
+import useAuth from '../hooks/useAuth'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
+import { db } from '../firebase';
 
 const ChatRow = ({ friendDetails }) => {
   const navigation = useNavigation();
-  const { user } = useAuth(); // Obtenha o usuário autenticado
+  const { user } = useAuth(); 
 
-  // Função para bloquear um usuário
   const handleBlockUser = async (friendDetails) => {
     if (!user || !user.uid || !friendDetails) {
       Alert.alert("Erro", "Detalhes do usuário não disponíveis.");
       return;
     }
-  
+
     const { friendId, displayName, photoURL } = friendDetails;
     if (!friendId || !displayName || !photoURL) {
       Alert.alert("Erro", "Informações incompletas do amigo para bloquear.");
       return;
     }
-  
+
     const blockerId = user.uid;
     const blockData = {
       blockedAt: serverTimestamp(),
       displayName: displayName,
       photoURL: photoURL,
     };
-  
+
     const blockedByData = {
       blockedAt: serverTimestamp(),
-      displayName: user.displayName, // Assume que user.displayName está disponível
-      photoURL: user.photoURL, // Assume que user.photoURL está disponível
+      displayName: user.displayName,
+      photoURL: user.photoURL,
     };
-  
+
     try {
-      // Bloquear para o usuário que está realizando o bloqueio
       const userRef = doc(db, "users", blockerId, "blockedUsers", friendId);
       await setDoc(userRef, blockData);
-  
-      // Registrar o bloqueio no usuário que está sendo bloqueado
+
       const targetRef = doc(db, "users", friendId, "blockedByUser", blockerId);
       await setDoc(targetRef, blockedByData);
-  
+
       Alert.alert("Bloquear", "Usuário bloqueado com sucesso!");
     } catch (error) {
       console.error("Erro ao bloquear usuário:", error);
@@ -68,7 +65,7 @@ const ChatRow = ({ friendDetails }) => {
       </TouchableOpacity>
       <TouchableOpacity
         style={tw.style("bg-red-500 p-2 rounded-md")}
-        onPress={() => handleBlockUser(friendDetails)} // Mudança aqui para passar o objeto completo
+        onPress={() => handleBlockUser(friendDetails)}
       >
         <Text style={tw.style("text-white text-sm font-semibold")}>Bloquear</Text>
       </TouchableOpacity>
