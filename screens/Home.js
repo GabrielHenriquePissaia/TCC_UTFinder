@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Modal, Alert, TextInput } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, onSnapshot, setDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,11 +17,10 @@ const Home = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [friends, setFriends] = useState([]);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const [selectedCampus, setSelectedCampus] = useState(null);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [distanceFilter, setDistanceFilter] = useState(200);
+  const [searchText, setSearchText] = useState('');
   const navigation = useNavigation();
 
   const haversineDistance = (coords1, coords2) => {
@@ -52,11 +51,17 @@ const Home = () => {
       const fetchedUsers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        distance: haversineDistance(location, doc.data().location || { latitude: 0, longitude: 0 })
-      })).filter(user => user.distance <= distanceFilter);
+        distance: doc.data().location ? haversineDistance(location, doc.data().location) : null
+      })).filter(user => user.location !== null);
 
-      setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers);
+      if (distanceFilter <= 500) {
+        const filteredByDistance = fetchedUsers.filter(user => user.distance <= distanceFilter);
+        setUsers(filteredByDistance);
+        setFilteredUsers(filteredByDistance);
+      } else {
+        setUsers(fetchedUsers);
+        setFilteredUsers(fetchedUsers);
+      }
     } else {
       console.log("Usuário deslogado ou localização do usuário não informada");
       setUsers([]);
@@ -78,9 +83,7 @@ const Home = () => {
 
   const applyFilters = () => {
     const filtered = users.filter(user =>
-      (!selectedCourse || user.curso === selectedCourse) &&
-      (!selectedYear || user.anoFormacao === selectedYear) &&
-      (!selectedCampus || user.campus === selectedCampus)
+      (!selectedYear || user.anoFormacao === selectedYear)
     );
     setFilteredUsers(filtered);
     setIsFilterModalVisible(false);
@@ -109,49 +112,32 @@ const Home = () => {
     }
   };
 
-  const courseData = [
-    { label: 'Engenharia de Software', value: 'Engenharia de Software' },
-    { label: 'Engenharia de Computação', value: 'Engenharia de Computação' },
-    { label: 'Engenharia Mecânica', value: 'Engenharia Mecânica' },
-    { label: 'Engenharia Elétrica', value: 'Engenharia Elétrica' },
-    { label: 'Engenharia de Controle e Automação', value: 'Engenharia de Controle e Automação' },
-    { label: 'Engenharia Eletrônica', value: 'Engenharia Eletrônica' },
-    { label: 'Licenciatura em Matemática', value: 'Licenciatura em Matemática' },
-  ];
+  useEffect(() => {
+    const filtered = users.filter(user =>
+      user.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.curso.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.campus.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [searchText, users]);
 
   const yearData = [
-    { label: '2017-1', value: '2017-1' },
-    { label: '2017-2', value: '2017-2' },
-    { label: '2018-1', value: '2018-1' },
-    { label: '2018-2', value: '2018-2' },
-    { label: '2019-1', value: '2019-1' },
-    { label: '2019-2', value: '2019-2' },
-    { label: '2020-1', value: '2020-1' },
-    { label: '2020-2', value: '2020-2' },
-    { label: '2021-1', value: '2021-1' },
-    { label: '2021-2', value: '2021-2' },
-    { label: '2022-1', value: '2022-1' },
-    { label: '2022-2', value: '2022-2' },
-    { label: '2023-1', value: '2023-1' },
-    { label: '2023-2', value: '2023-2' },
-    { label: '2024-1', value: '2024-1' },
-    { label: '2024-2', value: '2024-2' },
-  ];
-
-  const campusData = [
-    { label: 'Curitiba', value: 'Curitiba' },
-    { label: 'Cornélio Procópio', value: 'Cornélio Procópio' },
-    { label: 'Campo Mourão', value: 'Campo Mourão' },
-    { label: 'Medianeira', value: 'Medianeira' },
-    { label: 'Pato Branco', value: 'Pato Branco' },
-    { label: 'Ponta Grossa', value: 'Ponta Grossa' },
-    { label: 'Dois Vizinhos', value: 'Dois Vizinhos' },
-    { label: 'Londrina', value: 'Londrina' },
-    { label: 'Toledo', value: 'Toledo' },
-    { label: 'Apucarana', value: 'Apucarana' },
-    { label: 'Francisco Beltrão', value: 'Francisco Beltrão' },
-    { label: 'Guarapuava', value: 'Guarapuava' },
-    { label: 'Santa Helena', value: 'Santa Helena' }
+    { label: '2009', value: 2017 },
+    { label: '2010', value: 2018 },
+    { label: '2011', value: 2019 },
+    { label: '2012', value: 2020 },
+    { label: '2013', value: 2021 },
+    { label: '2014', value: 2022 },
+    { label: '2015', value: 2023 },
+    { label: '2016', value: 2024 },
+    { label: '2017', value: 2017 },
+    { label: '2018', value: 2018 },
+    { label: '2019', value: 2019 },
+    { label: '2020', value: 2020 },
+    { label: '2021', value: 2021 },
+    { label: '2022', value: 2022 },
+    { label: '2023', value: 2023 },
+    { label: '2024', value: 2024 },
   ];
 
   return (
@@ -174,12 +160,12 @@ const Home = () => {
           <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
         </TouchableOpacity>
       </View>
-      <Text style={styles.sectionTitle}>Todos os contatos no raio de {distanceFilter} KM</Text>
+      <Text style={styles.sectionTitle}>Todos os contatos no raio de {distanceFilter <= 500 ? `${distanceFilter} KM` : 'qualquer distância'}</Text>
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
         <Slider
           style={{width: 200, height: 40}}
           minimumValue={10}
-          maximumValue={500}
+          maximumValue={501}
           minimumTrackTintColor="#FFFFFF"
           maximumTrackTintColor="#000000"
           step={10}
@@ -187,6 +173,12 @@ const Home = () => {
           onValueChange={setDistanceFilter}
         />
       </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Pesquisar..."
+        value={searchText}
+        onChangeText={setSearchText}
+      />
       <TouchableOpacity onPress={handleIconClick}>
         <Ionicons name="filter-circle" size={40} color="#007bff" />
       </TouchableOpacity>
@@ -206,7 +198,8 @@ const Home = () => {
                 style={[styles.button, friends.includes(item.id) ? styles.buttonDisabled : styles.buttonEnabled]} 
                 onPress={() => handleAddContact(item.id)}
                 disabled={friends.includes(item.id)}
-              ><Text style={styles.buttonText}>{friends.includes(item.id) ? 'Amigo' : 'Adicionar contato'}</Text>
+              >
+                <Text style={styles.buttonText}>{friends.includes(item.id) ? 'Amigo' : 'Adicionar contato'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -222,30 +215,12 @@ const Home = () => {
           <View style={styles.modalView}>
             <Dropdown
               style={styles.dropdown}
-              data={courseData}
-              labelField="label"
-              valueField="value"
-              placeholder="Selecione um curso"
-              value={selectedCourse}
-              onChange={item => setSelectedCourse(item.value)}
-            />
-            <Dropdown
-              style={styles.dropdown}
               data={yearData}
               labelField="label"
               valueField="value"
               placeholder="Selecione um ano"
               value={selectedYear}
               onChange={item => setSelectedYear(item.value)}
-            />
-            <Dropdown
-              style={styles.dropdown}
-              data={campusData}
-              labelField="label"
-              valueField="value"
-              placeholder="Selecione um campus"
-              value={selectedCampus}
-              onChange={item => setSelectedCampus(item.value)}
             />
             <TouchableOpacity
               style={[styles.button, styles.buttonClose]}
@@ -277,6 +252,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: '#000',
     backgroundColor: 'white'
+  },
+  searchInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    margin: 10,
+    paddingHorizontal: 10,
   },
   card: {
     flexDirection: 'row',
@@ -322,7 +305,6 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     width: 250,
-    height: 250,
     margin: 16,
     height: 50,
     borderBottomColor: 'gray',
@@ -346,7 +328,7 @@ const styles = StyleSheet.create({
     shadowOffset: {
       width: 0,
       height: 2
-  },
+    },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5
