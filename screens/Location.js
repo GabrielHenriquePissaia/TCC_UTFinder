@@ -59,7 +59,7 @@ const Profile = () => {
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailsText}>Seu curso: {profileData.curso || 'Não informado'}</Text>
-          <Text style={styles.detailsText}>Seu período de formação: {profileData.anoFormacao || 'Não informado'}</Text>
+          <Text style={styles.detailsText}>Seu ano de formação: {profileData.anoFormacao || 'Não informado'}</Text>
           <Text style={styles.detailsText}>Sua universidade: {profileData.universidade || 'Não informado'}</Text>
           <Text style={styles.detailsText}>Seu campus: {profileData.campus || 'Não informado'}</Text>
           <View style={styles.mapContainer}>

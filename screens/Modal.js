@@ -5,48 +5,21 @@ import useAuth from '../hooks/useAuth';
 import { setDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db, timestamp } from '../firebase';
 import { useNavigation } from '@react-navigation/native';
-import { Dropdown } from 'react-native-element-dropdown';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Dropdown } from 'react-native-element-dropdown';
 
 const Modal = () => {
   const { user } = useAuth();
   const navigation = useNavigation();
 
   const [image, setImage] = useState('');
-  const [curso, setCurso] = useState(null);
-  const [anoFormacao, setAnoFormacao] = useState(null);
+  const [curso, setCurso] = useState('');
+  const [anoFormacao, setAnoFormacao] = useState(new Date());
   const [campus, setCampus] = useState(null);
   const [location, setLocation] = useState(null);
-
-  const cursoData = [
-    { label: 'Engenharia de Software', value: 'Engenharia de Software' },
-    { label: 'Engenharia de Computação', value: 'Engenharia de Computação' },
-    { label: 'Engenharia Mecânica', value: 'Engenharia Mecânica' },
-    { label: 'Engenharia Elétrica', value: 'Engenharia Elétrica' },
-    { label: 'Engenharia de Controle e Automação', value: 'Engenharia de Controle e Automação' },
-    { label: 'Engenharia Eletrônica', value: 'Engenharia Eletrônica' },
-    { label: 'Licenciatura em Matemática', value: 'Licenciatura em Matemática' },
-  ];
-
-  const anoFormacaoData = [
-    { label: '2017-1', value: '2017-1' },
-    { label: '2017-2', value: '2017-2' },
-    { label: '2018-1', value: '2018-1' },
-    { label: '2018-2', value: '2018-2' },
-    { label: '2019-1', value: '2019-1' },
-    { label: '2019-2', value: '2019-2' },
-    { label: '2020-1', value: '2020-1' },
-    { label: '2020-2', value: '2020-2' },
-    { label: '2021-1', value: '2021-1' },
-    { label: '2021-2', value: '2021-2' },
-    { label: '2022-1', value: '2022-1' },
-    { label: '2022-2', value: '2022-2' },
-    { label: '2023-1', value: '2023-1' },
-    { label: '2023-2', value: '2023-2' },
-    { label: '2024-1', value: '2024-1' },
-    { label: '2024-2', value: '2024-2' },
-  ];
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const campusData = [
     { label: 'Curitiba', value: 'Curitiba' },
@@ -69,14 +42,14 @@ const Modal = () => {
       const userData = doc.data();
       if (userData) {
         setImage(userData.photoURL || '');
-        setCurso(userData.curso || null);
-        setAnoFormacao(userData.anoFormacao || null);
+        setCurso(userData.curso || '');
+        setAnoFormacao(userData.anoFormacao ? new Date(userData.anoFormacao, 0, 1) : new Date());
         setCampus(userData.campus || null);
         setLocation(userData.location || null);
       }
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [user.uid]);
 
   const handleGetLocation = async () => {
@@ -93,7 +66,7 @@ const Modal = () => {
       latitudeDelta: 0.005,
       longitudeDelta: 0.005
     });
-    console.log("Localização atual:", currentLocation.coords); // Isso registrará as coordenadas atuais
+    console.log("Localização atual:", currentLocation.coords);
   };
 
   const handleNoLocation = () => {
@@ -109,23 +82,27 @@ const Modal = () => {
         curso,
         campus,
         universidade: 'UTFPR',
-        anoFormacao,
+        anoFormacao: anoFormacao.getFullYear(),
         location, 
         timestamp,
       }, { merge: true });
       Alert.alert("Perfil atualizado", "Seu perfil foi atualizado com sucesso!");
+      navigation.goBack(); // Fechar o modal
     } catch (err) {
       Alert.alert("Erro ao atualizar perfil", err.message);
     }
   };
 
+  const isProfileComplete = image && curso && campus && anoFormacao;
+
   return (
     <ScrollView style={tw.style("flex-1")} contentContainerStyle={tw.style("items-center pt-1")}>
       <Image style={tw.style("h-20 w-full")} resizeMode="contain" source={require("../assets/Logo.png")} />
       <Text style={tw.style("text-xl text-gray-500 p-5 font-bold")}>Olá {user.displayName}</Text>
+      <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Url de sua foto de perfil</Text>
       <TextInput placeholder="Coloque o URL de sua foto de perfil" style={tw.style("text-center text-xl pb-2")} keyboardType='url' value={image} onChangeText={setImage} />
       <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu Curso</Text>
-      <Dropdown style={styles.dropdown} data={cursoData} labelField="label" valueField="value" placeholder="Selecione o curso" value={curso} onChange={item => setCurso(item.value)} />
+      <TextInput placeholder="Digite seu curso" style={tw.style("text-center text-xl pb-2")} value={curso} onChangeText={setCurso} />
       <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu Campus</Text>
       <Dropdown
         style={styles.dropdown}
@@ -137,7 +114,22 @@ const Modal = () => {
         onChange={item => setCampus(item.value)}
       />
       <Text style={tw.style("text-xl text-red-500 p-5 font-bold")}>Seu ano de formação</Text>
-      <Dropdown style={styles.dropdown} data={anoFormacaoData} labelField="label" valueField="value" placeholder="Selecione o ano" value={anoFormacao} onChange={item => setAnoFormacao(item.value)} />
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
+        <Text style={tw.style("text-center text-xl")}>{anoFormacao.getFullYear()}</Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          value={anoFormacao}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              setAnoFormacao(selectedDate);
+            }
+          }}
+        />
+      )}
       <TouchableOpacity
         style={tw.style("w-64 p-3 rounded-xl bg-blue-500", { marginBottom: 20 })}
         onPress={handleGetLocation}
@@ -150,8 +142,15 @@ const Modal = () => {
       >
         <Text style={tw.style("text-center text-xl text-white")}>Não compartilhar localização</Text>
       </TouchableOpacity>
-      <TouchableOpacity disabled={!image || !curso || !anoFormacao } style={tw.style("w-64 p-3 rounded-xl bg-gray-400", { marginBottom: 20 })} onPress={updateUserProfile}>
-        <Text style={tw.style("text-center text-xl")}>Atualizar Perfil</Text>
+      <TouchableOpacity
+        disabled={!isProfileComplete}
+        style={[
+          tw.style("w-64 p-3 rounded-xl", { marginBottom: 20 }),
+          isProfileComplete ? tw.style("bg-green-500") : tw.style("bg-gray-400"),
+        ]}
+        onPress={updateUserProfile}
+      >
+        <Text style={tw.style("text-center text-xl text-white")}>Atualizar Perfil</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -165,6 +164,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
+    backgroundColor: 'white',
+  },
+  dateButton: {
+    width: '90%',
+    height: 50,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    justifyContent: 'center',
     backgroundColor: 'white',
   },
   mapStyle: {
