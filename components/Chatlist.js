@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text } from 'react-native';
 import useAuth from '../hooks/useAuth';
-import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from "../firebase";
 import ChatRow from '../components/Chatrow';
 import tw from "tailwind-react-native-classnames";
@@ -16,7 +16,7 @@ const Chatlist = () => {
     if (user) {
       const blockedRef = collection(db, "users", user.uid, "blockedUsers");
       const blockedByRef = collection(db, "users", user.uid, "blockedByUser");
-  
+
       const unsubscribeBlockedBy = onSnapshot(blockedByRef, (snapshot) => {
         const blockedBy = snapshot.docs.map(doc => doc.id);
         setBlockedByUsers(blockedBy);
@@ -33,7 +33,7 @@ const Chatlist = () => {
       };
     }
   }, [user]);
-  
+
   useEffect(() => {
     if (user) {
       const friendsRef = collection(db, "friends", user.uid, "userFriends");
@@ -44,7 +44,7 @@ const Chatlist = () => {
         }).filter(friend => !blockedUsers.includes(friend.friendId) && !blockedByUsers.includes(friend.friendId));
         setFriends(friendList);
       });
-  
+
       return () => unsubscribe();
     }
   }, [user, blockedUsers, blockedByUsers]);
