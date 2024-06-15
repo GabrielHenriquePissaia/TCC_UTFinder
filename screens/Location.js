@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ImageBackground, TouchableOpacity, Alert } from 'react-native';
 import useAuth from '../hooks/useAuth';
 import MapView, { Marker } from 'react-native-maps';
@@ -15,6 +15,7 @@ const Location = () => {
   const [location, setLocation] = useState(null);
   const [isProfileComplete, setIsProfileComplete] = useState(false);
   const navigation = useNavigation();
+  const mapRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
@@ -26,6 +27,17 @@ const Location = () => {
 
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, [user.uid]);
+
+  useEffect(() => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      }, 1000);
+    }
+  }, [location]);
 
   if (!profileData) {
     return (
@@ -73,8 +85,9 @@ const Location = () => {
           <View style={styles.mapContainer}>
             {location ? (
               <MapView
+                ref={mapRef}
                 style={styles.map}
-                initialRegion={{
+                region={{
                   latitude: location.latitude,
                   longitude: location.longitude,
                   latitudeDelta: 0.0922,

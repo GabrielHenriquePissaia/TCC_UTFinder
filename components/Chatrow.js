@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Image, Alert, StyleSheet } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { useNavigation } from "@react-navigation/native";
 import useAuth from '../hooks/useAuth'; 
-import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'; 
+import { doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'; 
 import { db } from '../firebase';
 
 const ChatRow = ({ friendDetails }) => {
@@ -13,7 +13,7 @@ const ChatRow = ({ friendDetails }) => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", friendDetails.friendId), (doc) => {
-      setFriendData(doc.data());
+      setFriendData({ friendId: friendDetails.friendId, ...doc.data() });
     });
 
     return () => unsubscribe();
@@ -58,28 +58,111 @@ const ChatRow = ({ friendDetails }) => {
     }
   };
 
+  const handleUnfriend = async (friendDetails) => {
+    if (!user || !user.uid || !friendDetails || !friendDetails.friendId) {
+      Alert.alert("Erro", "Detalhes do usuário não disponíveis.");
+      return;
+    }
+
+    const { friendId } = friendDetails;
+
+    try {
+      // Remover da subcoleção de amigos do usuário logado
+      await deleteDoc(doc(db, "friends", user.uid, "userFriends", friendId));
+
+      // Remover da subcoleção de amigos do amigo
+      await deleteDoc(doc(db, "friends", friendId, "userFriends", user.uid));
+
+      Alert.alert("Desfazer Amizade", "Amizade desfeita com sucesso!");
+    } catch (error) {
+      console.error("Erro ao desfazer amizade:", error);
+      Alert.alert("Erro ao desfazer amizade", error.message);
+    }
+  };
+
   return (
-    <View style={tw.style("flex-row items-center justify-between py-3 px-5 bg-white mx-3 my-1 rounded-lg shadow-lg")}>
+    <View style={styles.card}>
       <TouchableOpacity
         onPress={() => navigation.navigate("Message", { userId: friendData.friendId })}
-        style={tw.style("flex-row items-center")}
+        style={styles.userInfo}
       >
         <Image
-          style={tw.style("rounded-full h-16 w-16 mr-4")}
+          style={styles.avatar}
           source={{ uri: friendData.photoURL || "https://img.freepik.com/free-icon/user_318-159711.jpg" }}
         />
-        <Text style={tw.style("text-lg font-semibold")}>
+        <Text style={styles.name}>
           {friendData.displayName || "No name"}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={tw.style("bg-red-500 p-2 rounded-md")}
-        onPress={() => handleBlockUser(friendData)}
-      >
-        <Text style={tw.style("text-white text-sm font-semibold")}>Bloquear</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.button, styles.blockButton]}
+          onPress={() => handleBlockUser(friendData)}
+        >
+          <Text style={styles.buttonText}>Bloquear</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, styles.unfriendButton]}
+          onPress={() => handleUnfriend(friendData)}
+        >
+          <Text style={styles.buttonText}>Desfazer Amizade</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    marginHorizontal: 10,
+    marginTop: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    flexShrink: 1,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+  },
+  button: {
+    padding: 8,
+    borderRadius: 5,
+    marginLeft: 5,
+  },
+  blockButton: {
+    backgroundColor: '#f44336',
+  },
+  unfriendButton: {
+    backgroundColor: '#2196f3',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+});
 
 export default ChatRow;
