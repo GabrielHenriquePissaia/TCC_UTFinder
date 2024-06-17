@@ -33,7 +33,7 @@ const Inicio = () => {
   };
 
   return (
-    <SafeAreaView style={tw.style("flex-1")}>
+    <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
       <View style={styles.header}>
         <TouchableOpacity onPress={logout} style={styles.logoutButton}>
           <Ionicons name="log-out-outline" size={45} color="red" />
@@ -50,11 +50,8 @@ const Inicio = () => {
             Para usar nosso aplicativo, deve-se atualizar seus dados de cadastro.
           </Text>
         )}
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Modal')}>
-          <Text style={styles.buttonText}>Atualizar Perfil</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Home')} disabled={!profileComplete}>
-          <Text style={styles.buttonText}>Procurar Egresos</Text>
+          <Text style={styles.buttonText}>Procurar Egressos</Text>
         </TouchableOpacity>
         <TouchableOpacity style={getButtonStyle(profileComplete)} onPress={() => navigation.navigate('Location')} disabled={!profileComplete}>
           <Text style={styles.buttonText}>Meu Perfil</Text>

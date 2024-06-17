@@ -71,7 +71,7 @@ const Pedidos = () => {
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
-          <Ionicons name="chevron-back-outline" size={34} color="black" />
+          <Ionicons name="home" size={34} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
           <Ionicons name="happy" size={30} color={"#000000"}/>
@@ -87,31 +87,41 @@ const Pedidos = () => {
           <Ionicons name="chatbubbles-sharp" size={30} color={"#000000"}/>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={requests}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View style={tw.style("flex-row items-center justify-between p-4 bg-white m-2 rounded-lg shadow")}>
-            <Image
-              style={tw.style("rounded-full h-12 w-12 mr-4")}
-              source={{ uri: item.requesterPhotoURL }}
-            />
-            <Text style={tw.style("flex-1 text-lg font-semibold")}>{item.requesterName}</Text>
-            <TouchableOpacity
-              style={tw.style("bg-green-500 px-4 py-2 rounded")}
-              onPress={() => handleAcceptRequest(item.id, item.requesterId)}
-            >
-              <Text style={tw.style("text-white text-sm")}>Aceitar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={tw.style("bg-red-500 px-4 py-2 ml-2 rounded")}
-              onPress={() => handleRejectRequest(item.id)}
-            >
-              <Text style={tw.style("text-white text-sm")}>Recusar</Text>
-            </TouchableOpacity>
+      <View style={tw.style("flex-1")}>
+        {requests.length > 0 ? (
+          <FlatList
+            data={requests}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <View style={tw.style("flex-row items-center justify-between p-4 bg-white m-2 rounded-lg shadow")}>
+                <Image
+                  style={tw.style("rounded-full h-12 w-12 mr-4")}
+                  source={{ uri: item.requesterPhotoURL }}
+                />
+                <Text style={tw.style("flex-1 text-lg font-semibold")}>{item.requesterName}</Text>
+                <TouchableOpacity
+                  style={tw.style("bg-green-500 px-4 py-2 rounded")}
+                  onPress={() => handleAcceptRequest(item.id, item.requesterId)}
+                >
+                  <Text style={tw.style("text-white text-sm")}>Aceitar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={tw.style("bg-red-500 px-4 py-2 ml-2 rounded")}
+                  onPress={() => handleRejectRequest(item.id)}
+                >
+                  <Text style={tw.style("text-white text-sm")}>Recusar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        ) : (
+          <View style={tw.style("p-5")}>
+            <Text style={tw.style("text-center text-lg")}>
+              Sem solicitações de amizade no momento.
+            </Text>
           </View>
         )}
-      />
+      </View>
     </SafeAreaView>
   );
 }

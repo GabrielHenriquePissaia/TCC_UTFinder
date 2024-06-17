@@ -13,7 +13,7 @@ const Chat = () => {
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate("Inicio")}>
-          <Ionicons name="chevron-back-outline" size={34} color="black" />
+          <Ionicons name="home" size={34} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Location")}>
           <Ionicons name="happy" size={30} color={"#000000"} />
