@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Dropdown } from 'react-native-element-dropdown';
 import Slider from '@react-native-community/slider';
 import { serverTimestamp } from 'firebase/firestore';
+import * as Location from 'expo-location';
+import updateUserLocation from '../utils/locationUtils'; // Importe a função aqui
 
 const Home = () => {
   const { user } = useAuth();
@@ -89,6 +91,36 @@ const Home = () => {
     );
     setFilteredUsers(filtered);
   }, [searchText, selectedYear, users]);
+
+  useEffect(() => {
+    let locationSubscription;
+
+    const startLocationUpdates = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
+        return;
+      }
+
+      locationSubscription = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 50 },
+        (newLocation) => {
+          const { coords } = newLocation;
+          updateUserLocation(user.uid, coords);
+        }
+      );
+    };
+
+    if (user.location) {
+      startLocationUpdates();
+    }
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, [user.location]);
 
   const handleAddContact = async (targetUserId) => {
     if (friends.includes(targetUserId)) {

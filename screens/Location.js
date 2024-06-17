@@ -8,8 +8,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
+import * as Location from 'expo-location';
+import updateUserLocation from '../utils/locationUtils'; // Importe a função aqui
 
-const Location = () => {
+const LocationScreen = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState({});
   const [location, setLocation] = useState(null);
@@ -37,6 +39,36 @@ const Location = () => {
         longitudeDelta: 0.0421,
       }, 1000);
     }
+  }, [location]);
+
+  useEffect(() => {
+    let locationSubscription;
+
+    const startLocationUpdates = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
+        return;
+      }
+
+      locationSubscription = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, distanceInterval: 50 },
+        (newLocation) => {
+          const { coords } = newLocation;
+          updateUserLocation(user.uid, coords);
+        }
+      );
+    };
+
+    if (location) {
+      startLocationUpdates();
+    }
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
   }, [location]);
 
   if (!profileData) {
@@ -187,4 +219,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Location;
+export default LocationScreen;
