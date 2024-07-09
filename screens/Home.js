@@ -20,6 +20,7 @@ const Home = () => {
   const [friends, setFriends] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockedByUsers, setBlockedByUsers] = useState([]);
   const [distanceFilter, setDistanceFilter] = useState(200);
   const [searchText, setSearchText] = useState('');
   const navigation = useNavigation();
@@ -46,6 +47,28 @@ const Home = () => {
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, [user.uid, distanceFilter]);
 
+  useEffect(() => {
+    if (user) {
+      const blockedRef = collection(db, "users", user.uid, "blockedUsers");
+      const blockedByRef = collection(db, "users", user.uid, "blockedByUser");
+
+      const unsubscribeBlocked = onSnapshot(blockedRef, (snapshot) => {
+        const blocked = snapshot.docs.map(doc => doc.id);
+        setBlockedUsers(blocked);
+      });
+
+      const unsubscribeBlockedBy = onSnapshot(blockedByRef, (snapshot) => {
+        const blockedBy = snapshot.docs.map(doc => doc.id);
+        setBlockedByUsers(blockedBy);
+      });
+
+      return () => {
+        unsubscribeBlocked();
+        unsubscribeBlockedBy();
+      };
+    }
+  }, [user]);
+
   const fetchUsers = async (location) => {
     if (user && location) {
       const querySnapshot = await getDocs(collection(db, "users"));
@@ -53,10 +76,10 @@ const Home = () => {
         id: doc.id,
         ...doc.data(),
         distance: doc.data().location ? haversineDistance(location, doc.data().location) : null
-      })).filter(user => user.location !== null);
+      })).filter(u => u.location !== null && !blockedUsers.includes(u.id) && !blockedByUsers.includes(u.id));
 
       if (distanceFilter <= 500) {
-        const filteredByDistance = fetchedUsers.filter(user => user.distance <= distanceFilter);
+        const filteredByDistance = fetchedUsers.filter(u => u.distance <= distanceFilter);
         setUsers(filteredByDistance);
         setFilteredUsers(filteredByDistance);
       } else {
@@ -74,23 +97,34 @@ const Home = () => {
     if (user) {
       const friendsRef = collection(db, "friends", user.uid, "userFriends");
       getDocs(friendsRef).then(snapshot => {
-        const friendList = snapshot.docs.map(doc => doc.id);
+        const friendList = snapshot.docs.map(doc => doc.id).filter(id => !blockedUsers.includes(id) && !blockedByUsers.includes(id));
         setFriends(friendList);
       }).catch(error => {
         console.error("Erro ao buscar amigos:", error);
       });
     }
-  }, [user]);
+  }, [user, blockedUsers, blockedByUsers]);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      (!selectedYear || user.anoFormacao === selectedYear) &&
-      (user.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.curso.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.campus.toLowerCase().includes(searchText.toLowerCase()))
+    const filtered = users.filter(u =>
+      (!selectedYear || u.anoFormacao === selectedYear) &&
+      (u.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+      u.curso.toLowerCase().includes(searchText.toLowerCase()) ||
+      u.campus.toLowerCase().includes(searchText.toLowerCase())) &&
+      !blockedUsers.includes(u.id) &&
+      !blockedByUsers.includes(u.id)
     );
     setFilteredUsers(filtered);
-  }, [searchText, selectedYear, users]);
+  }, [searchText, selectedYear, users, blockedUsers, blockedByUsers]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
+      const userData = doc.data();
+      fetchUsers(userData.location);
+    });
+  
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, [user.uid, distanceFilter, blockedUsers, blockedByUsers]);
 
   useEffect(() => {
     let locationSubscription;
@@ -224,7 +258,7 @@ const Home = () => {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={filteredUsers.filter(u => user && u.id !== user.uid)}
+        data={filteredUsers.filter(u => user && u.id !== user.uid && !blockedUsers.includes(u.id) && !blockedByUsers.includes(u.id))}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
