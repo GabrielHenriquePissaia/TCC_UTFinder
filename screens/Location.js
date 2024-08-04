@@ -6,10 +6,10 @@ import tw from 'tailwind-react-native-classnames';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import * as Location from 'expo-location';
-import updateUserLocation from '../utils/locationUtils'; // Importe a função aqui
+import updateUserLocation from '../utils/locationUtils';
 
 const LocationScreen = () => {
   const { user } = useAuth();
@@ -27,11 +27,11 @@ const LocationScreen = () => {
       setIsProfileComplete(userData?.curso && userData?.anoFormacao && userData?.universidade);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [user.uid]);
 
   useEffect(() => {
-    if (location && mapRef.current) {
+    if (location && mapRef.current && location.latitude !== null && location.longitude !== null) {
       mapRef.current.animateToRegion({
         latitude: location.latitude,
         longitude: location.longitude,
@@ -41,34 +41,37 @@ const LocationScreen = () => {
     }
   }, [location]);
 
-  useEffect(() => {
-    let locationSubscription;
+  const handleStopSharingLocation = async () => {
+    try {
+      await updateUserLocation(user.uid, null);
+      setLocation(null);
+    } catch (error) {
+      console.error("Erro ao atualizar localização:", error);
+    }
+  };
 
-    const startLocationUpdates = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
-        return;
-      }
-
-      locationSubscription = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, distanceInterval: 50 },
-        (newLocation) => {
-          const { coords } = newLocation;
-          updateUserLocation(user.uid, coords);
-        }
-      );
-    };
-
-    if (location) {
-      startLocationUpdates();
+  const startLocationUpdates = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
+      return;
     }
 
-    return () => {
-      if (locationSubscription) {
-        locationSubscription.remove();
+    await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.High, distanceInterval: 50 },
+      (newLocation) => {
+        const { coords } = newLocation;
+        if (coords && coords.latitude !== null && coords.longitude !== null && location !== null) {
+          updateUserLocation(user.uid, coords);
+        }
       }
-    };
+    );
+  };
+
+  useEffect(() => {
+    if (location && location.latitude !== null && location.longitude !== null) {
+      startLocationUpdates();
+    }
   }, [location]);
 
   if (!profileData) {
@@ -115,7 +118,7 @@ const LocationScreen = () => {
           <Text style={styles.detailsText}>Sua universidade: {profileData.universidade || 'Não informado'}</Text>
           <Text style={styles.detailsText}>Seu campus: {profileData.campus || 'Não informado'}</Text>
           <View style={styles.mapContainer}>
-            {location ? (
+            {location && location.latitude !== null && location.longitude !== null ? (
               <MapView
                 ref={mapRef}
                 style={styles.map}

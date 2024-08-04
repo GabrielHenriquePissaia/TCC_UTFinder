@@ -11,7 +11,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import Slider from '@react-native-community/slider';
 import { serverTimestamp } from 'firebase/firestore';
 import * as Location from 'expo-location';
-import updateUserLocation from '../utils/locationUtils'; // Importe a função aqui
+import updateUserLocation from '../utils/locationUtils';
 
 const Home = () => {
   const { user } = useAuth();
@@ -41,11 +41,15 @@ const Home = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
       const userData = doc.data();
-      fetchUsers(userData.location);
+      if (userData.location && userData.location.latitude !== null && userData.location.longitude !== null) {
+        fetchUsers(userData.location);
+      } else {
+        fetchUsers(null);
+      }
     });
 
     return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [user.uid, distanceFilter]);
+  }, [user.uid, distanceFilter, blockedUsers, blockedByUsers]);
 
   useEffect(() => {
     if (user) {
@@ -70,28 +74,42 @@ const Home = () => {
   }, [user]);
 
   const fetchUsers = async (location) => {
-    if (user && location) {
+    if (user) {
       const querySnapshot = await getDocs(collection(db, "users"));
       const fetchedUsers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        distance: doc.data().location ? haversineDistance(location, doc.data().location) : null
-      })).filter(u => u.location !== null && !blockedUsers.includes(u.id) && !blockedByUsers.includes(u.id));
-
+        distance: doc.data().location && location ? haversineDistance(location, doc.data().location) : null
+      }));
+  
+      let filteredUsers;
       if (distanceFilter <= 500) {
-        const filteredByDistance = fetchedUsers.filter(u => u.distance <= distanceFilter);
-        setUsers(filteredByDistance);
-        setFilteredUsers(filteredByDistance);
+        if (location && location.latitude !== null && location.longitude !== null) {
+          filteredUsers = fetchedUsers.filter(u => 
+            u.location !== null && 
+            u.distance <= distanceFilter && 
+            !blockedUsers.includes(u.id) && 
+            !blockedByUsers.includes(u.id)
+          );
+        } else {
+          filteredUsers = []; // Usuário sem localização não vê ninguém quando a distância é <= 500
+        }
       } else {
-        setUsers(fetchedUsers);
-        setFilteredUsers(fetchedUsers);
+        // Mostrar todos os usuários, independente da localização
+        filteredUsers = fetchedUsers.filter(u => 
+          !blockedUsers.includes(u.id) && 
+          !blockedByUsers.includes(u.id)
+        );
       }
+  
+      setUsers(filteredUsers);
+      setFilteredUsers(filteredUsers);
     } else {
       console.log("Usuário deslogado ou localização do usuário não informada");
       setUsers([]);
       setFilteredUsers([]);
     }
-  };
+  };  
 
   useEffect(() => {
     if (user) {
@@ -118,37 +136,30 @@ const Home = () => {
   }, [searchText, selectedYear, users, blockedUsers, blockedByUsers]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
-      const userData = doc.data();
-      fetchUsers(userData.location);
-    });
-  
-    return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [user.uid, distanceFilter, blockedUsers, blockedByUsers]);
-
-  useEffect(() => {
     let locationSubscription;
-
+  
     const startLocationUpdates = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permissão de localização negada', 'Precisamos de permissão para acessar sua localização');
         return;
       }
-
+  
       locationSubscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, distanceInterval: 50 },
         (newLocation) => {
           const { coords } = newLocation;
-          updateUserLocation(user.uid, coords);
+          if (coords && coords.latitude !== null && coords.longitude !== null && user.location !== null) {
+            updateUserLocation(user.uid, coords);
+          }
         }
       );
     };
-
-    if (user.location) {
+  
+    if (user.location && user.location.latitude !== null && user.location.longitude !== null) {
       startLocationUpdates();
     }
-
+  
     return () => {
       if (locationSubscription) {
         locationSubscription.remove();
