@@ -10,13 +10,24 @@ const ChatRow = ({ friendDetails }) => {
   const navigation = useNavigation();
   const { user } = useAuth(); 
   const [friendData, setFriendData] = useState(friendDetails);
+  const [lastMessage, setLastMessage] = useState('');
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", friendDetails.friendId), (doc) => {
       setFriendData({ friendId: friendDetails.friendId, ...doc.data() });
     });
 
-    return () => unsubscribe();
+    const conversationId = [user.uid, friendDetails.friendId].sort().join('_');
+    const unsubscribeMessage = onSnapshot(doc(db, "conversations", conversationId), (doc) => {
+      if (doc.exists) {
+        setLastMessage(doc.data().lastMessage);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeMessage();
+    };
   }, [friendDetails.friendId]);
 
   const handleBlockUser = async (friendDetails) => {
@@ -80,19 +91,26 @@ const ChatRow = ({ friendDetails }) => {
     }
   };
 
+  const conversationId = [user.uid, friendData.friendId].sort().join('_');
+
   return (
     <View style={styles.card}>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Message", { userId: friendData.friendId })}
+        onPress={() => navigation.navigate("Message", { conversationId })}
         style={styles.userInfo}
       >
         <Image
           style={styles.avatar}
           source={{ uri: friendData.photoURL || "https://img.freepik.com/free-icon/user_318-159711.jpg" }}
         />
-        <Text style={styles.name}>
-          {friendData.displayName || "No name"}
-        </Text>
+        <View>
+          <Text style={styles.name}>
+            {friendData.displayName || "No name"}
+          </Text>
+          <Text style={styles.message}>
+            {lastMessage?.message || 'No messages yet'}
+          </Text>
+        </View>
       </TouchableOpacity>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -144,8 +162,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flexShrink: 1,
   },
+  message: {
+    fontSize: 14,
+    color: 'gray',
+  },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   button: {
     padding: 8,
