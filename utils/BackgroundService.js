@@ -3,6 +3,7 @@ import updateUserLocation from './locationUtils';
 import { fetchFriendRequests, fetchChatMessages } from './apiUtils';
 import * as Location from 'expo-location';
 import { getAuth } from 'firebase/auth';
+import { showNotification } from './notificationUtils';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
 
@@ -21,8 +22,18 @@ const veryIntensiveTask = async (taskDataArguments) => {
         }
 
         // Buscar pedidos de amizade e mensagens de chat
-        await fetchFriendRequests(user.uid);
-        await fetchChatMessages(user.uid);
+        const friendRequests = await fetchFriendRequests(user.uid);
+        const chatMessages = await fetchChatMessages(user.uid);
+
+        // Log para verificar funcionamento contínuo
+        console.log('Localização atual:', location);
+        console.log('Pedidos de amizade:', friendRequests);
+        console.log('Mensagens de chat:', chatMessages);
+
+        // Notificar sobre novos pedidos de amizade
+        if (friendRequests.length > 0) {
+          showNotification('Novo Pedido de Amizade', 'Você tem novos pedidos de amizade!');
+        }
       }
 
       await sleep(delay);
