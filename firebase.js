@@ -1,12 +1,12 @@
-// Import the functions you need from the SDKs you need
-import { getApps, initializeApp } from "firebase/app";
+// firebase.js
+import { getApps, initializeApp, getApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth,EmailAuthProvider } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import {getReactNativePersistence, initializeAuth,} from "firebase/auth"
-import {getFirestore, serverTimestamp} from "firebase/firestore" 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { getAuth, EmailAuthProvider } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+import { getFirestore, serverTimestamp } from "firebase/firestore";
+import messaging from '@react-native-firebase/messaging';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBPJ4jjmcKLfBVACvJs-kdIsgffdeHApgk",
   authDomain: "egrechat.firebaseapp.com",
@@ -18,19 +18,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app,auth;
+let app, auth;
 
-if(!getApps().length){
-  try{
+if (!getApps().length) {
+  try {
     app = initializeApp(firebaseConfig);
-    auth = initializeAuth(app,{
-      persistence:getReactNativePersistence(AsyncStorage)
-    })
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
   } catch (error) {
     console.log("erro ao iniciar o app:" + error);
   }
-
-} else{
+} else {
   app = getApp();
   auth = getAuth(app);
 }
@@ -40,4 +39,4 @@ const provider = new EmailAuthProvider();
 const db = getFirestore();
 const timestamp = serverTimestamp();
 
-export {app, auth, provider, db, timestamp}; 
+export { app, auth, provider, db, timestamp, messaging };

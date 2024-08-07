@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import StackNavigator from "./navigation/stacknavigator";
 import { AuthProvider } from "./hooks/useAuth";
 import { startBackgroundService, stopBackgroundService } from './utils/BackgroundService';
+import { registerForPushNotificationsAsync, requestUserPermission, setupFCMNotificationListener } from './notificationUtils';
 
 export default function App() {
   useEffect(() => {
@@ -11,6 +12,12 @@ export default function App() {
     return () => {
       stopBackgroundService();
     };
+  }, []);
+
+  useEffect(() => {
+    registerForPushNotificationsAsync();
+    requestUserPermission();
+    setupFCMNotificationListener();
   }, []);
 
   return (
