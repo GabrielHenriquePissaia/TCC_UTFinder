@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import StackNavigator from "./navigation/stacknavigator";
 import { AuthProvider } from "./hooks/useAuth";
 import { startBackgroundService, stopBackgroundService } from './utils/BackgroundService';
-import { registerForPushNotificationsAsync, requestUserPermission, setupFCMNotificationListener } from './notificationUtils';
+import { registerForPushNotificationsAsync, requestUserPermission, setupFCMNotificationListener } from './utils/notificationUtils';
 
 export default function App() {
   useEffect(() => {

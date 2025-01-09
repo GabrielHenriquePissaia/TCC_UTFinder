@@ -29,8 +29,8 @@ const Login = () => {
         signInWithEmailAndPassword(auth, email, senha).then(({user}) => {
             setLoading(false);
         }).catch((error) => {
-            setLoading(false);  // Corrigido para garantir que o estado de loading seja desativado após um erro
-            Alert.alert("Erro de Login", error.message);  // Mostra uma mensagem de erro mais específica
+            setLoading(false);
+            Alert.alert("Erro de Login", error.message);
         });
     };
     
@@ -44,8 +44,8 @@ const Login = () => {
                 setLoading(false);
             });
         }).catch((error) => {
-            setLoading(false);  // Garante que o loading seja desativado em caso de erro
-            Alert.alert("Erro ao Registrar", error.message);  // Mostra uma mensagem de erro mais específica
+            setLoading(false);
+            Alert.alert("Erro ao Registrar", error.message);
         });
     };
 

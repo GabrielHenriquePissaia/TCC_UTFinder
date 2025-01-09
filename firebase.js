@@ -1,12 +1,12 @@
-// firebase.js
+// Import the necessary functions from the Firebase SDKs
 import { getApps, initializeApp, getApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getAuth, EmailAuthProvider } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getReactNativePersistence, initializeAuth } from "firebase/auth";
 import { getFirestore, serverTimestamp } from "firebase/firestore";
 import messaging from '@react-native-firebase/messaging';
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBPJ4jjmcKLfBVACvJs-kdIsgffdeHApgk",
   authDomain: "egrechat.firebaseapp.com",
@@ -27,16 +27,14 @@ if (!getApps().length) {
       persistence: getReactNativePersistence(AsyncStorage)
     });
   } catch (error) {
-    console.log("erro ao iniciar o app:" + error);
+    console.log("Erro ao iniciar o app: " + error);
   }
 } else {
   app = getApp();
   auth = getAuth(app);
 }
 
-const analytics = getAnalytics(app);
-const provider = new EmailAuthProvider();
-const db = getFirestore();
+const db = getFirestore(app);
 const timestamp = serverTimestamp();
 
-export { app, auth, provider, db, timestamp, messaging };
+export { app, auth, db, timestamp, messaging };

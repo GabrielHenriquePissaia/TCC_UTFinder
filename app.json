@@ -29,7 +29,8 @@
         "RECEIVE_BOOT_COMPLETED",
         "WAKE_LOCK",
         "com.google.android.c2dm.permission.RECEIVE"
-      ]
+      ],
+      "package": "com.example.egrechat"
     },
     "web": {
       "favicon": "./assets/favicon.png"
