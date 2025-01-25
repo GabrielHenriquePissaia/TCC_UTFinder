@@ -72,6 +72,7 @@ async function getCurrentLocation() {
       return null;
     }
     let location = await Location.getCurrentPositionAsync({});
+    console.log('Localização obtida com sucesso:', location); // Log da localização
     return location.coords;
   } catch (error) {
     console.error(error);

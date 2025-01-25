@@ -1,7 +1,6 @@
 // notifications.js
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import * as Permissions from 'expo-permissions';
 import messaging from '@react-native-firebase/messaging';
 
 Notifications.setNotificationHandler({
@@ -14,6 +13,8 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotificationsAsync() {
   let token;
+
+  // Configuração de canais de notificação para Android
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -23,16 +24,20 @@ export async function registerForPushNotificationsAsync() {
     });
   }
 
-  const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+  // Solicita permissões diretamente do `expo-notifications`
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
   if (existingStatus !== 'granted') {
-    const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+    const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
+
   if (finalStatus !== 'granted') {
     alert('Failed to get push token for push notification!');
     return;
   }
+
+  // Obtém o token de push do Expo
   token = (await Notifications.getExpoPushTokenAsync()).data;
 
   console.log(token);
@@ -66,5 +71,15 @@ export function setupFCMNotificationListener() {
       },
       trigger: { seconds: 1 },
     });
+  });
+}
+
+export function showNotification(title, body) {
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+    },
+    trigger: { seconds: 1 },
   });
 }
