@@ -19,6 +19,7 @@ const LocationScreen = () => {
   const navigation = useNavigation();
   const mapRef = useRef(null);
 
+  //para obter os dados do usuário do Firestore
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
       const userData = doc.data();
@@ -30,6 +31,14 @@ const LocationScreen = () => {
     return () => unsubscribe();
   }, [user.uid]);
 
+// Esse useEffect escuta mudanças no documento do usuário no Firestore.
+// Se houver dados, ele:
+// Atualiza profileData com os dados do usuário.
+// Define location com a localização armazenada no Firestore (ou null se não houver).
+// Verifica se o perfil está completo (curso, anoFormacao, universidade) e define isProfileComplete.
+// Retorna unsubscribe para remover o ouvinte quando o componente for desmontado, evitando vazamento de memória.
+
+// centralizar o mapa na localização do usuário
   useEffect(() => {
     if (location && mapRef.current && location.latitude !== null && location.longitude !== null) {
       mapRef.current.animateToRegion({
@@ -41,6 +50,11 @@ const LocationScreen = () => {
     }
   }, [location]);
 
+//   Esse useEffect verifica se location e mapRef.current estão definidos.
+// Se sim, chama animateToRegion(), centralizando o mapa na posição do usuário.
+// O efeito ocorre sempre que location mudar.
+
+// para parar de compartilhar a localização
   const handleStopSharingLocation = async () => {
     try {
       await updateUserLocation(user.uid, null);
@@ -50,6 +64,7 @@ const LocationScreen = () => {
     }
   };
 
+  // iniciar a atualização da localização
   const startLocationUpdates = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -68,11 +83,23 @@ const LocationScreen = () => {
     );
   };
 
+//   Solicita permissões de localização:
+// Se a permissão já foi concedida, continua normalmente.
+// Caso contrário, exibe um Alert informando que o acesso foi negado.
+// Inicia a atualização da localização usando watchPositionAsync():
+// Define alta precisão (High).
+// Atualiza os dados no Firestore quando o usuário se move mais de 50 metros.
+
+//iniciar a atualização de localização automaticamente
   useEffect(() => {
     if (location && location.latitude !== null && location.longitude !== null) {
       startLocationUpdates();
     }
   }, [location]);
+
+// Esse useEffect verifica se location está definida e válida.
+// Se a localização estiver disponível, chama startLocationUpdates(), ativando a atualização contínua.
+// Objetivo: Manter a posição do usuário sempre atualizada no Firestore.
 
   if (!profileData) {
     return (

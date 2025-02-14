@@ -10,9 +10,9 @@ import { useNavigation } from '@react-navigation/native';
 import tw from 'tailwind-react-native-classnames';
 
 const Bloqueios = () => {
-  const { user } = useAuth();
-  const [blockedUsers, setBlockedUsers] = useState([]);
-  const navigation = useNavigation();
+  const { user } = useAuth(); // Obtém o usuário autenticado do contexto
+  const [blockedUsers, setBlockedUsers] = useState([]); // Estado para armazenar a lista de usuários bloqueados
+  const navigation = useNavigation(); // Hook para navegação entre telas
 
   useEffect(() => {
     if (user) {
@@ -29,6 +29,11 @@ const Bloqueios = () => {
     }
   }, [user]);
 
+  // Esse `useEffect` é responsável por buscar em tempo real a lista de usuários bloqueados do usuário autenticado.
+  // Ele se conecta ao Firestore e escuta mudanças, atualizando o estado `blockedUsers` sempre que um bloqueio é adicionado ou removido.
+  // Caso o usuário deslogue, esse efeito não será executado.
+  // O listener é removido automaticamente quando o componente deixa de ser renderizado, evitando vazamento de memória.
+
   const handleUnblockUser = async (userId) => {
     try {
       await deleteDoc(doc(db, "users", user.uid, "blockedUsers", userId));
@@ -39,6 +44,12 @@ const Bloqueios = () => {
       Alert.alert("Erro", "Não foi possível desbloquear o usuário.");
     }
   };
+
+  // Essa função é chamada quando o usuário clica para desbloquear outra pessoa.
+  // Primeiro, ela remove o usuário da lista "blockedUsers" do usuário autenticado no Firestore.
+  // Em seguida, remove o usuário autenticado da lista "blockedByUser" do outro usuário.
+  // Se a operação for bem-sucedida, um alerta de sucesso é exibido.
+  // Caso ocorra um erro (como falha de conexão ou permissão no Firestore), o erro é registrado no console e um alerta é exibido.
 
   return (
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>

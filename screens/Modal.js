@@ -37,6 +37,7 @@ const Modal = () => {
     { label: 'Santa Helena', value: 'Santa Helena' }
   ];
 
+  //para carregar dados do usuário do Firestore
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
       const userData = doc.data();
@@ -52,6 +53,13 @@ const Modal = () => {
     return () => unsubscribe();
   }, [user.uid]);
 
+//   Obtém os dados do usuário do Firestore:
+// Escuta mudanças no documento users/{user.uid}.
+// Atualiza os estados do componente (image, curso, anoFormacao, campus, location).
+// Retorno do useEffect:
+// Cancela a assinatura (unsubscribe) ao desmontar o componente.
+
+//para obter a localização do usuário
   const handleGetLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -67,13 +75,65 @@ const Modal = () => {
       longitudeDelta: 0.005
     });
     console.log("Localização atual:", currentLocation.coords);
-  };
 
+    Alert.alert('Localização não compartilhada', 'Você optou por compartilhar sua localização, Após o botão ok, aperte em Atualizar perfil.');
+  };
+//   Solicita permissão de acesso à localização:
+// Se negada, exibe um alerta e interrompe a função.
+// Obtém a localização atual do dispositivo:
+// Location.getCurrentPositionAsync(): Obtém coordenadas GPS com alta precisão.
+// Atualiza o estado location com latitude e longitude.
+// Exibe um alerta informativo para o usuário.
+
+// const handleGetLocation = async () => {
+  //   let { status } = await Location.getForegroundPermissionsAsync(); // Obtém status atual
+  
+  //   if (status === 'granted') {
+  //     // Permissão já concedida → Obtém a localização
+  //     let currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+  //     setLocation({
+  //       latitude: currentLocation.coords.latitude,
+  //       longitude: currentLocation.coords.longitude,
+  //       latitudeDelta: 0.005,
+  //       longitudeDelta: 0.005
+  //     });
+  
+  //     console.log("Localização atual:", currentLocation.coords);
+  //   } else {
+  //     // Permissão não concedida → Solicita novamente
+  //     let { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+  
+  //     if (newStatus === 'granted') {
+  //       // Permissão concedida após segunda tentativa → Obtém localização
+  //       let currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+  //       setLocation({
+  //         latitude: currentLocation.coords.latitude,
+  //         longitude: currentLocation.coords.longitude,
+  //         latitudeDelta: 0.005,
+  //         longitudeDelta: 0.005
+  //       });
+  
+  //       console.log("Localização atual:", currentLocation.coords);
+  //     } else {
+  //       // Permissão negada novamente → Abre configurações
+  //       Alert.alert(
+  //         'Permissão negada',
+  //         'Você negou o acesso à localização. Para ativar, vá até as configurações do seu dispositivo.',
+  //         [
+  //           { text: 'Ok', style: 'cancel' },
+  //         ]
+  //       );
+  //     }
+  //   }
+  // };
+
+  //Função para remover a localização
   const handleNoLocation = () => {
     setLocation(null);
-    Alert.alert('Localização não compartilhada', 'Você optou por não compartilhar sua localização.');
+    Alert.alert('Localização não compartilhada', 'Você optou por não compartilhar sua localização, Após o botão ok, aperte em Atualizar perfil.');
   };
 
+  //Função para atualizar o perfil do usuário
   const updateUserProfile = async () => {
     try {
       await setDoc(doc(db, "users", user.uid), {

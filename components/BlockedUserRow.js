@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import tw from "tailwind-react-native-classnames";
 
 const BlockedUserRow = ({ userDetails, onUnblock }) => {
+  // Extrai os dados do usuário bloqueado passados via props
   const { displayName, photoURL, userId } = userDetails;
 
   return (
@@ -24,7 +25,7 @@ const BlockedUserRow = ({ userDetails, onUnblock }) => {
             "Você tem certeza que deseja desbloquear este usuário?",
             [
               { text: "Cancelar", style: "cancel" },
-              { text: "Desbloquear", onPress: () => onUnblock(userId) },
+              { text: "Desbloquear", onPress: () => onUnblock(userId) }, // Chama a função `onUnblock` se o usuário confirmar onUnblock que está definida na scrren Bloqueios.js
             ]
           );
         }}

@@ -17,6 +17,8 @@ const MessageScreen = () => {
   const { conversationId } = route.params;
   const navigation = useNavigation();
 
+  // para carregar mensagens em tempo real
+
   useEffect(() => {
     const q = query(
       collection(db, 'conversations', conversationId, 'messages'),
@@ -35,6 +37,18 @@ const MessageScreen = () => {
     return unsubscribe;
   }, [conversationId]);
 
+//   Cria uma consulta (query) ao Firestore:
+// Acessa a coleção messages dentro de conversations/{conversationId}.
+// Ordena as mensagens pelo timestamp em ordem decrescente (desc), ou seja, mais recentes primeiro.
+// onSnapshot:
+// Escuta em tempo real mudanças na coleção.
+// Atualiza messages sempre que uma nova mensagem for adicionada.
+// Retorno do useEffect:
+// Desinscreve (unsubscribe) o listener ao desmontar o componente.
+// Objetivo:
+// Atualizar mensagens em tempo real sem precisar recarregar a tela.
+
+// Função para enviar mensagem
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -52,6 +66,23 @@ const MessageScreen = () => {
 
     setInput('');
   };
+
+// Verifica se a mensagem contém texto:
+// if (!input.trim()) return;
+// Se o usuário tentar enviar uma mensagem vazia, a função é interrompida.
+// Cria um objeto messageData:
+// message: Contém o texto digitado pelo usuário.
+// senderId: Identifica o remetente com user.uid.
+// timestamp: Usa serverTimestamp() para registrar a data/hora da mensagem no Firestore.
+// Adiciona a mensagem ao Firestore:
+// addDoc(collection(db, 'conversations', conversationId, 'messages'), messageData);
+// Insere a mensagem na subcoleção messages dentro da conversa correspondente (conversationId).
+// Atualiza o último envio na conversa:
+// updateDoc(doc(db, 'conversations', conversationId), { lastMessage: messageData });
+// Define a última mensagem enviada na coleção conversations.
+// Limpa o campo de entrada (input) após envio:
+// setInput('');
+// Assim, o usuário pode digitar uma nova mensagem sem precisar apagar a anterior.
 
   return (
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>

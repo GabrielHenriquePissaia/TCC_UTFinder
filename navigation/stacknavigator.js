@@ -6,7 +6,7 @@ import home from "../screens/Home";
 import chat from "../screens/Chat";
 import match from "../screens/Match";
 import message from "../screens/Message";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../hooks/useAuth"; // Importação do hook de autenticação
 import modal from "../screens/Modal";
 import location from "../screens/Location";
 import bloqueios from "../screens/Bloqueios";
@@ -16,7 +16,7 @@ import pedidos from "../screens/Pedidos";
 const Stack = createStackNavigator();
 
 const stacknavigator = () => {
-  const { user } = useAuth();
+  const { user } = useAuth(); // Obtém o usuário autenticado do contexto de autenticação
 
   return (
     <Stack.Navigator
@@ -58,5 +58,12 @@ const stacknavigator = () => {
     </Stack.Navigator>
   );
 };
+
+// stacknavigator:
+// 1. Define a navegação da aplicação utilizando o `createStackNavigator`.
+// 2. Verifica se o usuário está autenticado através do `useAuth()`.
+// 3. Se o usuário estiver autenticado, exibe as telas do aplicativo.
+// 4. Caso contrário, exibe apenas a tela de login.
+// 5. Algumas telas (como `Match` e `Modal`) utilizam transições especiais para parecerem pop-ups no iOS.
 
 export default stacknavigator;

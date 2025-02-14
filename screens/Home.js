@@ -12,31 +12,99 @@ import Slider from '@react-native-community/slider';
 import { serverTimestamp } from 'firebase/firestore';
 import * as Location from 'expo-location';
 import updateUserLocation from '../utils/locationUtils';
+import { listenToFriendRequests, listenToChatMessages } from '../utils/apiUtils';
 
 const Home = () => {
-  const { user } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(null);
-  const [blockedUsers, setBlockedUsers] = useState([]);
-  const [blockedByUsers, setBlockedByUsers] = useState([]);
-  const [distanceFilter, setDistanceFilter] = useState(200);
-  const [searchText, setSearchText] = useState('');
-  const navigation = useNavigation();
+  const { user } = useAuth(); // Obtém o usuário autenticado
+  const [users, setUsers] = useState([]); // Estado para armazenar a lista de usuários
+  const [filteredUsers, setFilteredUsers] = useState([]); // Estado para armazenar usuários filtrados
+  const [friends, setFriends] = useState([]); // Estado para armazenar amigos do usuário
+  const [selectedYear, setSelectedYear] = useState(null); // Estado para armazenar ano de formação selecionado
+  const [blockedUsers, setBlockedUsers] = useState([]); // Estado para armazenar lista de usuários bloqueados
+  const [blockedByUsers, setBlockedByUsers] = useState([]); // Estado para armazenar lista de usuários que bloquearam o usuário atual
+  const [distanceFilter, setDistanceFilter] = useState(200); // Estado para armazenar filtro de distância (em KM)
+  const [searchText, setSearchText] = useState(''); // Estado para armazenar texto da busca
+  const navigation = useNavigation(); // Hook para manipular a navegação
+  const [pendingRequests, setPendingRequests] = useState([]); // Estado para armazenar pedidos de amizade pendentes
+  const [isLoading, setIsLoading] = useState(true); // Estado para controlar o carregamento dos dados
 
   const haversineDistance = (coords1, coords2) => {
     const R = 6371; // Raio da terra
+    // Converte as coordenadas de latitude de graus para radianos.
     const lat1 = coords1.latitude * Math.PI / 180;
     const lat2 = coords2.latitude * Math.PI / 180;
+    // Calcula a diferença em latitude e longitude entre os dois pontos e converte para radianos.
     const deltaLat = (coords2.latitude - coords1.latitude) * Math.PI / 180;
     const deltaLon = (coords2.longitude - coords1.longitude) * Math.PI / 180;
-
+    // Fórmula de Haversine: calcula a distância esférica entre dois pontos na Terra.
     const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
               Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distancia em km
   };
+
+  /*
+  - Esta função calcula a distância entre dois pontos geográficos (latitude e longitude) na superfície da Terra.
+  - Utiliza a fórmula de Haversine, que é uma equação matemática usada para determinar distâncias em uma esfera.
+  - A conversão de graus para radianos é necessária, pois as funções trigonométricas em JavaScript operam em radianos.
+  - O resultado é a distância entre os dois pontos em quilômetros.
+  - Essa função é usada, por exemplo, para calcular a proximidade entre usuários no aplicativo.
+*/
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribeFriendRequests = listenToFriendRequests(user.uid, (friendRequests) => {
+        setPendingRequests(friendRequests.map(request => request.requesterId));
+      });
+  
+      const unsubscribeChatMessages = listenToChatMessages(user.uid, (chatMessages) => {
+        console.log('Mensagens de chat:', chatMessages);
+      });
+  
+      return () => {
+        unsubscribeFriendRequests();
+        unsubscribeChatMessages();
+      };
+    }
+  }, [user]);
+  
+  /*
+  - Este efeito executa quando o estado do `user` muda, ou seja, quando um usuário faz login, logout ou seus dados são atualizados.
+  - Ele ativa dois listeners que monitoram em tempo real:
+    1. `listenToFriendRequests`: Atualiza a lista de solicitações de amizade do usuário autenticado.
+    2. `listenToChatMessages`: Monitora mensagens de chat recebidas e exibe no console para depuração.
+  - Os listeners usam `onSnapshot`, garantindo que qualquer alteração no Firestore seja refletida imediatamente na interface do usuário.
+  - O `return` dentro do `useEffect` garante que os listeners sejam removidos quando o componente for desmontado ou o usuário mudar, evitando vazamentos de memória.
+  */
+
+  useEffect(() => {
+    if (user && user.uid) {
+      const unsubscribeFriendRequests = listenToFriendRequests(user.uid, (friendRequests) => {
+        setPendingRequests(friendRequests.map(request => request.requesterId));
+        setIsLoading(false); // Dados carregados
+      });
+  
+      const unsubscribeChatMessages = listenToChatMessages(user.uid, (chatMessages) => {
+        console.log('Mensagens de chat atualizadas:', chatMessages);
+        setIsLoading(false); // Dados carregados
+      });
+  
+      return () => {
+        unsubscribeFriendRequests();
+        unsubscribeChatMessages();
+      };
+    }
+  }, [user]);
+
+  /*
+  - Este efeito executa sempre que o estado do `user` muda.
+  - Garante que o `user.uid` esteja disponível antes de ativar os listeners, evitando erros.
+  - Ativa dois listeners para monitoramento em tempo real no Firestore:
+    1. `listenToFriendRequests`: Atualiza a lista de solicitações de amizade em tempo real.
+    2. `listenToChatMessages`: Captura mensagens de chat recebidas e as exibe no console.
+  - O `setIsLoading(false)` é acionado após a atualização de dados, removendo qualquer estado de carregamento.
+  - O `return` no final remove os listeners sempre que o usuário muda ou o componente é desmontado, prevenindo vazamentos de memória.
+  */
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
@@ -50,6 +118,17 @@ const Home = () => {
 
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, [user.uid, distanceFilter, blockedUsers, blockedByUsers]);
+
+  /*
+  - Este efeito é acionado sempre que `user.uid`, `distanceFilter`, `blockedUsers` ou `blockedByUsers` mudam.
+  - Ativa um listener `onSnapshot` no Firestore para monitorar alterações no documento do usuário logado.
+  - Quando os dados do usuário são atualizados:
+    1. Verifica se o usuário tem uma localização válida (latitude e longitude não nulas).
+    2. Se a localização for válida, chama `fetchUsers(userData.location)` para buscar usuários próximos.
+    3. Se não houver localização válida, chama `fetchUsers(null)` para evitar erros na busca.
+  - O `return` remove o listener ao desmontar o componente, prevenindo vazamentos de memória.
+  - A dependência no array `[]` faz com que este efeito seja reexecutado sempre que os dados do usuário mudarem, garantindo que a lista de usuários próximos esteja sempre atualizada.
+  */
 
   useEffect(() => {
     if (user) {
@@ -73,18 +152,36 @@ const Home = () => {
     }
   }, [user]);
 
+  /*
+  - Este efeito é acionado sempre que a variável `user` mudar.
+  - Ele cria dois listeners `onSnapshot` para monitorar em tempo real:
+    1. A lista de usuários bloqueados pelo usuário logado.
+    2. A lista de usuários que bloquearam o usuário logado.
+  - Quando os dados mudam no Firestore:
+    1. `setBlockedUsers(blocked);` atualiza a lista de usuários bloqueados.
+    2. `setBlockedByUsers(blockedBy);` atualiza a lista de usuários que bloquearam o usuário.
+  - O `return` remove os listeners quando o componente é desmontado ou `user` muda, prevenindo vazamentos de memória.
+  - Isso garante que a interface do aplicativo sempre exiba os dados mais atualizados sobre bloqueios.
+  */
+
   const fetchUsers = async (location) => {
     if (user) {
+       // Obtém todos os documentos da coleção "users" no Firestore
       const querySnapshot = await getDocs(collection(db, "users"));
+      
+       // Mapeia os documentos para um array de objetos contendo os dados dos usuários
       const fetchedUsers = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
+        // Calcula a distância entre o usuário atual e os outros usuários se a localização for válida
         distance: doc.data().location && location ? haversineDistance(location, doc.data().location) : null
       }));
   
       let filteredUsers;
+      // Se o filtro de distância for menor ou igual a 500 km, aplica um filtro adicional
       if (distanceFilter <= 500) {
         if (location && location.latitude !== null && location.longitude !== null) {
+           // Filtra usuários baseando-se na localização e na distância, além de remover bloqueios
           filteredUsers = fetchedUsers.filter(u => 
             u.location !== null && 
             u.distance <= distanceFilter && 
@@ -101,28 +198,65 @@ const Home = () => {
           !blockedByUsers.includes(u.id)
         );
       }
-  
+      
+      // Atualiza os estados de usuários filtrados
       setUsers(filteredUsers);
       setFilteredUsers(filteredUsers);
     } else {
       console.log("Usuário deslogado ou localização do usuário não informada");
+       // Se não houver um usuário logado ou sem localização, limpa a lista de usuários
       setUsers([]);
       setFilteredUsers([]);
     }
-  };  
+  };
+  
+  /*
+  Explicação da função fetchUsers:
+  - Esta função busca todos os usuários do Firestore.
+  - Se a localização do usuário estiver disponível, calcula a distância para os outros usuários usando a função `haversineDistance`.
+  - Se a distância filtrada for menor ou igual a 500 km:
+    1. Apenas usuários dentro dessa distância são exibidos.
+    2. Usuários bloqueados e que bloquearam o usuário logado são removidos da lista.
+  - Se o filtro for maior que 500 km:
+    1. Todos os usuários são carregados, independentemente da distância.
+    2. Usuários bloqueados e bloqueadores ainda são removidos.
+  - Se o usuário não estiver logado ou não tiver localização registrada:
+    1. O console exibe um aviso.
+    2. A lista de usuários é esvaziada (`setUsers([])` e `setFilteredUsers([])`).
+  - Essa abordagem garante que os usuários exibidos respeitem as regras de bloqueio e filtros de distância.
+*/
 
+
+//buscar amigos e solicitações pendentes
   useEffect(() => {
     if (user) {
       const friendsRef = collection(db, "friends", user.uid, "userFriends");
+      const requestsRef = collection(db, "friendRequests", user.uid, "requests");
+  
       getDocs(friendsRef).then(snapshot => {
-        const friendList = snapshot.docs.map(doc => doc.id).filter(id => !blockedUsers.includes(id) && !blockedByUsers.includes(id));
+        const friendList = snapshot.docs.map(doc => doc.id);
         setFriends(friendList);
       }).catch(error => {
         console.error("Erro ao buscar amigos:", error);
       });
+  
+      getDocs(requestsRef).then(snapshot => {
+        const requestsList = snapshot.docs.map(doc => doc.id);
+        setPendingRequests(requestsList);
+      }).catch(error => {
+        console.error("Erro ao buscar solicitações pendentes:", error);
+      });
     }
   }, [user, blockedUsers, blockedByUsers]);
 
+// Esse useEffect executa a busca de amigos e solicitações de amizade pendentes do usuário sempre que o user, blockedUsers ou blockedByUsers for atualizado.
+// Ele acessa duas coleções no Firestore:
+// friendsRef: Pega a lista de amigos do usuário logado.
+// requestsRef: Pega a lista de solicitações de amizade pendentes do usuário.
+// Para cada uma das coleções, usa getDocs() para obter os documentos e os transforma em arrays de IDs.
+// Se houver erro ao buscar os dados, ele exibe uma mensagem no console.
+
+// filtrar usuários com base em pesquisa e filtros
   useEffect(() => {
     const filtered = users.filter(u =>
       (!selectedYear || u.anoFormacao === selectedYear) &&
@@ -135,6 +269,13 @@ const Home = () => {
     setFilteredUsers(filtered);
   }, [searchText, selectedYear, users, blockedUsers, blockedByUsers]);
 
+  // Esse useEffect filtra os usuários com base em três critérios:
+  // Ano de formação (selectedYear).
+  // Texto de pesquisa (searchText), verificando se o nome, curso ou campus contém a palavra pesquisada.
+  // Usuários bloqueados: Filtra os usuários que foram bloqueados pelo usuário ou que bloquearam o usuário.
+  // Sempre que o estado de searchText, selectedYear, users, blockedUsers ou blockedByUsers mudar, a lista de usuários será filtrada e setFilteredUsers() será atualizado.
+
+  //atualização de localização em tempo real
   useEffect(() => {
     let locationSubscription;
   
@@ -167,9 +308,16 @@ const Home = () => {
     };
   }, [user.location]);
 
+//   Esse useEffect gerencia a atualização da localização do usuário em tempo real.
+// Ele faz uso de Location.watchPositionAsync(), que monitora a posição do usuário e atualiza os dados quando há mudança de pelo menos 50 metros.
+// Caso a permissão de localização não tenha sido concedida, exibe um alerta informando que a permissão é necessária.
+// Se a permissão foi concedida, inicia um watchPositionAsync para monitorar mudanças na posição.
+// No retorno (return), garante que a assinatura de localização seja removida ao desmontar o componente
+
+//Enviar solicitação de amizade
   const handleAddContact = async (targetUserId) => {
-    if (friends.includes(targetUserId)) {
-      Alert.alert("Erro", "Você já é amigo deste usuário.");
+    if (friends.includes(targetUserId) || pendingRequests.includes(targetUserId)) {
+      Alert.alert("Erro", "Você já é amigo deste usuário ou a solicitação já foi enviada.");
       return;
     }
     try {
@@ -180,12 +328,22 @@ const Home = () => {
         status: "pending",
         timestamp: serverTimestamp(),
       });
+      setPendingRequests([...pendingRequests, targetUserId]);
       Alert.alert("Solicitação enviada com sucesso!");
     } catch (error) {
       console.error("Erro ao enviar solicitação de amizade:", error);
     }
-  };
+  };  
 
+// Essa função é acionada quando o usuário clica no botão de Adicionar contato.
+// Antes de enviar a solicitação de amizade, verifica se o usuário:
+// Já é amigo (friends.includes(targetUserId)).
+// Já enviou um pedido de amizade (pendingRequests.includes(targetUserId)).
+// Se qualquer uma das condições for verdadeira, exibe um alerta impedindo o envio.
+// Caso contrário, envia um novo pedido de amizade para o Firestore e adiciona o ID do usuário à lista de pendingRequests, garantindo que 
+// o botão fique desativado até a resposta do outro usuário.
+
+//Limpar pesquisa e filtros
   const handleClearFilters = () => {
     setSearchText('');
     setSelectedYear(null);
@@ -281,11 +439,22 @@ const Home = () => {
               <Text style={styles.details}>Universidade: {item.universidade}</Text>
               <Text style={styles.details}>Campus: {item.campus}</Text>
               <TouchableOpacity 
-                style={[styles.button, friends.includes(item.id) ? styles.buttonDisabled : styles.buttonEnabled]} 
+                style={[
+                  styles.button,
+                  friends.includes(item.id) || pendingRequests.includes(item.id)
+                    ? styles.buttonDisabled
+                    : styles.buttonEnabled,
+                ]}
                 onPress={() => handleAddContact(item.id)}
-                disabled={friends.includes(item.id)}
+                disabled={friends.includes(item.id) || pendingRequests.includes(item.id)}
               >
-                <Text style={styles.buttonText}>{friends.includes(item.id) ? 'Amigo' : 'Adicionar contato'}</Text>
+                <Text style={styles.buttonText}>
+                  {friends.includes(item.id)
+                    ? 'Amigo'
+                    : pendingRequests.includes(item.id)
+                    ? 'Solicitação enviada'
+                    : 'Adicionar contato'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

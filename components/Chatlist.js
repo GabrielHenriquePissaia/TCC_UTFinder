@@ -7,10 +7,10 @@ import ChatRow from './Chatrow';
 import tw from 'tailwind-react-native-classnames';
 
 const ChatList = () => {
-  const { user } = useAuth();
-  const [friends, setFriends] = useState([]);
-  const [blockedUsers, setBlockedUsers] = useState([]);
-  const [blockedByUsers, setBlockedByUsers] = useState([]);
+  const { user } = useAuth(); // Obtém o usuário autenticado
+  const [friends, setFriends] = useState([]); // Estado que armazena a lista de amigos
+  const [blockedUsers, setBlockedUsers] = useState([]); // Estado para usuários bloqueados pelo usuário logado
+  const [blockedByUsers, setBlockedByUsers] = useState([]); // Estado para usuários que bloquearam o usuário logado
 
   useEffect(() => {
     if (user) {
@@ -34,6 +34,13 @@ const ChatList = () => {
     }
   }, [user]);
 
+  // useEffect responsável por monitorar mudanças na lista de usuários bloqueados.
+  // Ele escuta alterações nas coleções "blockedUsers" e "blockedByUser" do usuário logado no Firestore.
+  // blockedUsers contém IDs dos usuários que o usuário logado bloqueou.
+  // blockedByUsers contém IDs dos usuários que bloquearam o usuário logado.
+  // O efeito é acionado quando o estado do usuário (`user`) muda.
+  // Quando há mudanças nos documentos dessas coleções, as listas de bloqueios são atualizadas no estado.
+
   useEffect(() => {
     if (user) {
       const friendsRef = collection(db, 'friends', user.uid, 'userFriends');
@@ -50,6 +57,12 @@ const ChatList = () => {
       return () => unsubscribe();
     }
   }, [user, blockedUsers, blockedByUsers]);
+
+  // useEffect responsável por buscar a lista de amigos do usuário logado.
+  // Ele monitora mudanças na coleção "userFriends" dentro do Firestore, na subcoleção do usuário logado.
+  // Ao obter os dados, ele filtra os amigos removendo aqueles que estão na lista de bloqueados (blockedUsers e blockedByUsers).
+  // Isso garante que o usuário não visualize contatos bloqueados, mantendo a privacidade.
+  // O efeito é acionado sempre que o estado de `user`, `blockedUsers` ou `blockedByUsers` for alterado.
 
   return (
     <View style={tw.style('flex-1')}>

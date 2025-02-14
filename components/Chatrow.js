@@ -30,6 +30,12 @@ const ChatRow = ({ friendDetails }) => {
     };
   }, [friendDetails.friendId]);
 
+  // useEffect responsável por buscar as atualizações do usuário amigo e a última mensagem na conversa.
+  // Ele monitora mudanças no documento do Firestore correspondente ao amigo (`friendDetails.friendId`).
+  // Quando há uma atualização, os novos dados do amigo são armazenados no estado `friendData`.
+  // Além disso, busca a última mensagem da conversa entre o usuário logado e o amigo.
+  // O efeito é acionado sempre que `friendDetails.friendId` mudar.
+
   const handleBlockUser = async (friendDetails) => {
     if (!user || !user.uid || !friendDetails) {
       Alert.alert("Erro", "Detalhes do usuário não disponíveis.");
@@ -69,6 +75,14 @@ const ChatRow = ({ friendDetails }) => {
     }
   };
 
+  // Função para bloquear um usuário.
+  // 1. Verifica se o usuário logado e os detalhes do amigo existem.
+  // 2. Obtém os detalhes do amigo (`friendId`, `displayName`, `photoURL`).
+  // 3. Cria os objetos `blockData` e `blockedByData` para armazenar no Firestore.
+  // 4. Salva os dados de bloqueio na subcoleção `blockedUsers` do usuário logado e `blockedByUser` do amigo.
+  // 5. Exibe um alerta informando que o usuário foi bloqueado.
+  // Se houver erro, exibe um alerta de falha e o erro é registrado no console.
+
   const handleUnfriend = async (friendDetails) => {
     if (!user || !user.uid || !friendDetails || !friendDetails.friendId) {
       Alert.alert("Erro", "Detalhes do usuário não disponíveis.");
@@ -91,8 +105,15 @@ const ChatRow = ({ friendDetails }) => {
     }
   };
 
-  const conversationId = [user.uid, friendData.friendId].sort().join('_');
+  // Função para remover um amigo da lista de conexões.
+  // 1. Verifica se o usuário logado e os detalhes do amigo existem.
+  // 2. Obtém o `friendId` do amigo.
+  // 3. Remove a amizade deletando os documentos nas subcoleções `userFriends` do usuário e do amigo.
+  // 4. Exibe um alerta informando que a amizade foi desfeita.
+  // Se houver erro, exibe um alerta de falha e o erro é registrado no console.
 
+  const conversationId = [user.uid, friendData.friendId].sort().join('_');
+  //conversationId: Define o ID único da conversa para garantir consistência nas mensagens adicionando um "_" entre os ids.
   return (
     <View style={styles.card}>
       <TouchableOpacity
@@ -101,14 +122,18 @@ const ChatRow = ({ friendDetails }) => {
       >
         <Image
           style={styles.avatar}
-          source={{ uri: friendData.photoURL || "https://img.freepik.com/free-icon/user_318-159711.jpg" }}
+          source={{
+            uri: friendData.photoURL && friendData.photoURL.trim() !== ""
+              ? friendData.photoURL
+              : "https://img.freepik.com/free-icon/user_318-159711.jpg",
+          }}
         />
         <View>
           <Text style={styles.name}>
-            {friendData.displayName || "No name"}
+            {friendData.displayName || "Sem nome"}
           </Text>
           <Text style={styles.message}>
-            {lastMessage?.message || 'No messages yet'}
+            {lastMessage?.message || 'Sem mensagens'}
           </Text>
         </View>
       </TouchableOpacity>

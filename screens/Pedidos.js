@@ -13,6 +13,7 @@ const Pedidos = () => {
   const [requests, setRequests] = useState([]);
   const navigation = useNavigation();
 
+  //obter solicitações de amizade em tempo real
   useEffect(() => {
     if (user) {
       const unsubscribe = onSnapshot(collection(db, "friendRequests", user.uid, "requests"), (snapshot) => {
@@ -26,6 +27,13 @@ const Pedidos = () => {
     }
   }, [user]);
 
+//   Escuta mudanças em friendRequests/{user.uid}/requests:
+// Obtém todas as solicitações de amizade do usuário.
+// Atualiza o estado requests com os dados recebidos.
+// Retorno do useEffect:
+// Cancela a assinatura (unsubscribe) ao desmontar o componente.
+
+//para aceitar uma solicitação de amizade
   const handleAcceptRequest = async (requestId, requesterId) => {
     const userDoc = await getDoc(doc(db, "users", requesterId));
     if (userDoc.exists()) {
@@ -56,6 +64,16 @@ const Pedidos = () => {
     }
   };
 
+//   Obtém os dados do usuário solicitante (requesterId).
+// Adiciona a amizade nos dois perfis (userFriends):
+// O usuário logado adiciona requesterId à sua lista de amigos.
+// requesterId também adiciona o usuário logado à sua lista de amigos.
+// Cria uma conversa entre os dois usuários (conversations/{conversationId}):
+// conversationId é um identificador único formado pelos uid dos participantes.
+// Remove a solicitação de amizade do Firestore (deleteDoc()).
+// Exibe um alerta informando que a solicitação foi aceita.
+
+//para rejeitar uma solicitação de amizade
   const handleRejectRequest = async (requestId) => {
     try {
       await deleteDoc(doc(db, "friendRequests", user.uid, "requests", requestId));
@@ -66,6 +84,11 @@ const Pedidos = () => {
       Alert.alert("Erro", "Não foi possível rejeitar a solicitação de amizade.");
     }
   };
+
+//   Remove a solicitação de amizade do Firestore (deleteDoc()).
+// Atualiza a lista de solicitações no estado (setRequests()).
+// Exibe um alerta informando que a solicitação foi rejeitada.
+// Captura e exibe erros caso a remoção falhe.
 
   return (
     <SafeAreaView style={tw.style("flex-1 mt-6 bg-gray-100")}>
@@ -96,7 +119,7 @@ const Pedidos = () => {
               <View style={tw.style("flex-row items-center justify-between p-4 bg-white m-2 rounded-lg shadow")}>
                 <Image
                   style={tw.style("rounded-full h-12 w-12 mr-4")}
-                  source={{ uri: item.requesterPhotoURL }}
+                  source={item.requesterPhotoURL ? { uri: item.requesterPhotoURL } : require("../assets/perfil.jpg")}
                 />
                 <Text style={tw.style("flex-1 text-lg font-semibold")}>{item.requesterName}</Text>
                 <TouchableOpacity

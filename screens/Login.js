@@ -4,6 +4,7 @@ import tw from "tailwind-react-native-classnames";
 import {createUserWithEmailAndPassword,signInWithEmailAndPassword,updateProfile} from "firebase/auth"
 import {auth} from "../firebase"
 import useAuth from '../hooks/useAuth';
+import { sendPasswordResetEmail } from "firebase/auth";
 
 const Login = () => {
     const [type, setType] = useState(1) //1.para logado 2.para deslogado
@@ -30,7 +31,7 @@ const Login = () => {
             setLoading(false);
         }).catch((error) => {
             setLoading(false);
-            Alert.alert("Erro de Login", error.message);
+            Alert.alert("Erro de Login", "E-mail ou Senha errados");
         });
     };
     
@@ -48,6 +49,24 @@ const Login = () => {
             Alert.alert("Erro ao Registrar", error.message);
         });
     };
+
+    const handlePasswordReset = () => {
+        if (email.trim() === "") {
+          return Alert.alert("Erro", "Por favor, insira seu e-mail para redefinir a senha.");
+        }
+      
+        sendPasswordResetEmail(auth, email)
+          .then(() => {
+            Alert.alert(
+              "E-mail enviado",
+              "Verifique sua caixa de entrada para redefinir sua senha."
+            );
+          })
+          .catch((error) => {
+            Alert.alert("Erro", "Não foi possível enviar o e-mail de redefinição. Verifique o e-mail inserido.");
+            console.error(error);
+          });
+      };
 
     if(loading){
         return(
@@ -87,6 +106,12 @@ const Login = () => {
 
                             <TouchableOpacity onPress={()=>setType(2)}>
                                 <Text style={tw.style("text-center text-white font-semibold pt-3")}>Não tem uma conta?</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={handlePasswordReset}>
+                            <Text style={tw.style("text-center text-blue-500 font-semibold pt-3")}>
+                                Esqueceu sua senha?
+                            </Text>
                             </TouchableOpacity>
                         </View>
                     </View>

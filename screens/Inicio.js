@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Image } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { useNavigation } from '@react-navigation/native';
 import useAuth from '../hooks/useAuth';
@@ -13,6 +13,7 @@ const Inicio = () => {
   const { user, logout } = useAuth(); // Utilizando o hook useAuth
   const [profileComplete, setProfileComplete] = useState(false);
 
+  //verificar se o perfil do usuário está completo
   useEffect(() => {
     if (user) {
       const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
@@ -27,7 +28,14 @@ const Inicio = () => {
       return () => unsubscribe();
     }
   }, [user]);
+// Esse useEffect escuta mudanças no documento do usuário no Firestore.
+// Ele executa a verificação sempre que o estado user mudar.
+// Se todos os campos obrigatórios (photoURL, curso, campus, anoFormacao) estiverem preenchidos, 
+// o estado profileComplete é definido como true, permitindo o acesso às funcionalidades do app.
+// Caso contrário, profileComplete será false, desativando os botões de navegação.
+// O retorno (return () => unsubscribe()) remove o ouvinte (onSnapshot) quando o componente é desmontado, evitando vazamento de memória.
 
+//definir o estilo dos botões
   const getButtonStyle = (isEnabled) => {
     return isEnabled ? styles.button : [styles.button, styles.disabledButton];
   };
@@ -43,6 +51,13 @@ const Inicio = () => {
       <ImageBackground style={tw.style('flex-1 justify-center items-center bg-yellow-500')}
         resizeMode="cover" source={require("../assets/BackgroundLogin.jpg")}
       >
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../assets/LogoApp.png")} // Certifique-se de que o nome do arquivo está correto
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
         <Text style={tw.style('text-2xl font-bold pb-10')}>Olá {user ? user.displayName : ''}</Text>
         <Text style={tw.style('pb-5 text-lg')}>O que deseja fazer?</Text>
         {!profileComplete && (
@@ -104,6 +119,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  logoContainer: {
+    alignItems: 'center',
+  },
+  logo: {
+    width: 225,  
+    height: 225,
   },
 });
 
